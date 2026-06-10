@@ -23,6 +23,8 @@ interface KantonginState {
   setHidden: React.Dispatch<React.SetStateAction<boolean>>;
   guest: boolean;
   setGuest: (g: boolean) => void;
+  onboarded: boolean;
+  setOnboarded: (v: boolean) => void;
 }
 
 const KantonginContext = createContext<KantonginState | null>(null);
@@ -32,6 +34,7 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
   const [budgets, setBudgets] = useState<Budget[]>(seedBudgets);
   const [hidden, setHidden] = useState(false);
   const [guest, setGuest] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
 
   const value = useMemo<KantonginState>(
     () => ({
@@ -45,8 +48,10 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
       setHidden,
       guest,
       setGuest,
+      onboarded,
+      setOnboarded,
     }),
-    [txns, budgets, hidden, guest],
+    [txns, budgets, hidden, guest, onboarded],
   );
 
   return <KantonginContext.Provider value={value}>{children}</KantonginContext.Provider>;
