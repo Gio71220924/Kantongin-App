@@ -45,3 +45,6 @@ example
 # agent instruction files (kept local, not published)
 CLAUDE.md
 AGENTS.md
+
+# personal Claude Code overrides (permissions, etc.)
+.claude/settings.local.json
