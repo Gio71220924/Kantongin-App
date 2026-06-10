@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,15 +27,18 @@ function group(n: number): string {
 
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
-  const { addTxn } = useKantongin();
+  const { addTxn, updateTxn, txns } = useKantongin();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editTxn = id ? txns.find((x) => x.id === id) : undefined;
+  const isEdit = !!editTxn;
 
-  const [type, setType] = useState<AddType>('expense');
-  const [amount, setAmount] = useState('');
-  const [catId, setCatId] = useState<CategoryId>('makan');
-  const [acctId, setAcctId] = useState<AccountId>('jago');
-  const [fromId, setFromId] = useState<AccountId>('bca');
-  const [toId, setToId] = useState<AccountId>('jago');
-  const [note, setNote] = useState('');
+  const [type, setType] = useState<AddType>(editTxn ? editTxn.type : 'expense');
+  const [amount, setAmount] = useState(editTxn ? String(editTxn.amount) : '');
+  const [catId, setCatId] = useState<CategoryId>(editTxn && editTxn.type !== 'transfer' ? editTxn.cat : 'makan');
+  const [acctId, setAcctId] = useState<AccountId>(editTxn && editTxn.type !== 'transfer' ? editTxn.acct : 'jago');
+  const [fromId, setFromId] = useState<AccountId>(editTxn && editTxn.type === 'transfer' ? editTxn.from : 'bca');
+  const [toId, setToId] = useState<AccountId>(editTxn && editTxn.type === 'transfer' ? editTxn.to : 'jago');
+  const [note, setNote] = useState(editTxn ? editTxn.title : '');
   const [success, setSuccess] = useState(false);
   const popScale = useRef(new Animated.Value(0.4)).current;
 
@@ -55,7 +58,9 @@ export default function AddScreen() {
 
   const save = () => {
     if (!valid) return;
-    const base = { id: 'n' + Date.now(), amount: amtNum, date: '2026-06-04', time: 'Baru' };
+    const base = isEdit
+      ? { id: editTxn!.id, amount: amtNum, date: editTxn!.date, time: editTxn!.time }
+      : { id: 'n' + Date.now(), amount: amtNum, date: '2026-06-04', time: 'Baru' };
     const t: Transaction = isTransfer
       ? { ...base, type: 'transfer', title: note || 'Transfer kantong', from: fromId, to: toId }
       : {
@@ -68,7 +73,8 @@ export default function AddScreen() {
     setSuccess(true);
     Animated.spring(popScale, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }).start();
     setTimeout(() => {
-      addTxn(t);
+      if (isEdit) updateTxn(t);
+      else addTxn(t);
       router.back();
     }, 1050);
   };
@@ -81,7 +87,7 @@ export default function AddScreen() {
           <Animated.View style={[styles.popCircle, { backgroundColor: accent, shadowColor: accent, transform: [{ scale: popScale }] }]}>
             <Icon name="check" size={48} stroke={3} color="#fff" />
           </Animated.View>
-          <Text style={styles.successTitle}>Transaksi tersimpan</Text>
+          <Text style={styles.successTitle}>{isEdit ? 'Perubahan disimpan' : 'Transaksi tersimpan'}</Text>
           <Text style={styles.successSub}>{isTransfer ? 'Transfer dicatat — bukan pengeluaran' : rp(amtNum)}</Text>
         </View>
       ) : null}
@@ -89,9 +95,9 @@ export default function AddScreen() {
       {/* header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => router.back()} style={styles.iconBtn} hitSlop={8}>
-          <Icon name="close" size={19} color={colors.text} />
+          <Icon name={isEdit ? 'chevron' : 'close'} size={19} color={colors.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Tambah Transaksi</Text>
+        <Text style={styles.headerTitle}>{isEdit ? 'Edit Transaksi' : 'Tambah Transaksi'}</Text>
         <View style={{ width: 38 }} />
       </View>
 
@@ -194,7 +200,7 @@ export default function AddScreen() {
         <Pressable onPress={save} disabled={!valid} style={[styles.saveBtn, { backgroundColor: valid ? accent : colors.line }]}>
           <Icon name="check" size={20} stroke={2.6} color={valid ? '#fff' : colors.muted} />
           <Text style={[styles.saveText, { color: valid ? '#fff' : colors.muted }]}>
-            {isTransfer ? 'Simpan Transfer' : 'Simpan Transaksi'}
+            {isEdit ? 'Simpan Perubahan' : isTransfer ? 'Simpan Transfer' : 'Simpan Transaksi'}
           </Text>
         </Pressable>
       </View>
