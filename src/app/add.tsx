@@ -15,7 +15,7 @@ import {
 import { useKantongin } from '@/store';
 import { catColor, catSoft, colors, fonts, oklchToHex, semantic } from '@/theme';
 
-type FlowType = 'income' | 'expense';
+type AddType = 'income' | 'expense' | 'transfer';
 
 const EXPENSE_CATS: CategoryId[] = ['makan', 'transport', 'belanja', 'tagihan', 'hiburan', 'kesehatan'];
 const INCOME_CATS: CategoryId[] = ['gaji', 'belanja'];
@@ -28,15 +28,18 @@ export default function AddScreen() {
   const insets = useSafeAreaInsets();
   const { addTxn } = useKantongin();
 
-  const [type, setType] = useState<FlowType>('expense');
+  const [type, setType] = useState<AddType>('expense');
   const [amount, setAmount] = useState('');
   const [catId, setCatId] = useState<CategoryId>('makan');
   const [acctId, setAcctId] = useState<AccountId>('jago');
+  const [fromId, setFromId] = useState<AccountId>('bca');
+  const [toId, setToId] = useState<AccountId>('jago');
   const [note, setNote] = useState('');
 
   const accent = semantic[type];
+  const isTransfer = type === 'transfer';
   const amtNum = parseInt(amount || '0', 10);
-  const valid = amtNum > 0;
+  const valid = amtNum > 0 && (!isTransfer || fromId !== toId);
   const cats = categories.filter((c) => (type === 'income' ? INCOME_CATS : EXPENSE_CATS).includes(c.id));
 
   const press = (k: string) => {
@@ -49,22 +52,22 @@ export default function AddScreen() {
 
   const save = () => {
     if (!valid) return;
-    const t: Transaction = {
-      id: 'n' + Date.now(),
-      type,
-      title: note || (type === 'income' ? 'Pemasukan' : catById(catId).label),
-      amount: amtNum,
-      date: '2026-06-04',
-      time: 'Baru',
-      cat: catId,
-      acct: acctId,
-    };
+    const base = { id: 'n' + Date.now(), amount: amtNum, date: '2026-06-04', time: 'Baru' };
+    const t: Transaction = isTransfer
+      ? { ...base, type: 'transfer', title: note || 'Transfer kantong', from: fromId, to: toId }
+      : {
+          ...base,
+          type,
+          title: note || (type === 'income' ? 'Pemasukan' : catById(catId).label),
+          cat: catId,
+          acct: acctId,
+        };
     addTxn(t);
     router.back();
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: isTransfer ? semantic.transfer + '08' : colors.bg }}>
       {/* header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => router.back()} style={styles.iconBtn} hitSlop={8}>
@@ -79,6 +82,7 @@ export default function AddScreen() {
         <View style={styles.selector}>
           <TypeTab id="income" label="Pemasukan" icon="up" active={type} onSelect={setType} />
           <TypeTab id="expense" label="Pengeluaran" icon="down" active={type} onSelect={setType} />
+          <TypeTab id="transfer" label="Transfer" icon="swap" active={type} onSelect={setType} />
         </View>
 
         {/* amount */}
@@ -90,32 +94,57 @@ export default function AddScreen() {
           </Text>
         </View>
 
-        {/* category */}
-        <FieldLabel>Kategori</FieldLabel>
-        <View style={styles.chipWrap}>
-          {cats.map((c) => {
-            const on = catId === c.id;
-            return (
-              <Pressable
-                key={c.id}
-                onPress={() => setCatId(c.id)}
-                style={[
-                  styles.chip,
-                  {
-                    borderColor: on ? catColor(c.hue) : colors.line,
-                    backgroundColor: on ? catSoft(c.hue) : colors.card,
-                  },
-                ]}>
-                <Icon name={glyphFor[c.id] ?? 'coins'} size={16} stroke={2.2} color={catColor(c.hue)} />
-                <Text style={[styles.chipText, { color: on ? catColor(c.hue, 0.45) : colors.text }]}>{c.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {isTransfer ? (
+          <>
+            <View style={styles.transferNote}>
+              <Icon name="swap" size={17} stroke={2.4} color={semantic.transfer} />
+              <Text style={styles.transferNoteText}>
+                Transfer antar rekening{' '}
+                <Text style={{ color: semantic.transfer, fontFamily: fonts.bold }}>tidak dihitung sebagai pengeluaran</Text>.
+              </Text>
+            </View>
 
-        {/* account */}
-        <FieldLabel>{type === 'income' ? 'Masuk ke Rekening' : 'Dari Rekening'}</FieldLabel>
-        <AcctPick value={acctId} onPick={setAcctId} accent={accent} />
+            <FieldLabel>Dari Rekening</FieldLabel>
+            <AcctPick
+              value={fromId}
+              accent={accent}
+              onPick={(v) => {
+                setFromId(v);
+                if (v === toId) setToId(accounts.find((a) => a.id !== v)!.id);
+              }}
+            />
+
+            <View style={styles.arrowRow}>
+              <View style={styles.arrowCircle}>
+                <Icon name="down" size={18} stroke={2.6} color="#fff" />
+              </View>
+            </View>
+
+            <FieldLabel>Ke Rekening</FieldLabel>
+            <AcctPick value={toId} accent={accent} exclude={fromId} onPick={setToId} />
+          </>
+        ) : (
+          <>
+            <FieldLabel>Kategori</FieldLabel>
+            <View style={styles.chipWrap}>
+              {cats.map((c) => {
+                const on = catId === c.id;
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setCatId(c.id)}
+                    style={[styles.chip, { borderColor: on ? catColor(c.hue) : colors.line, backgroundColor: on ? catSoft(c.hue) : colors.card }]}>
+                    <Icon name={glyphFor[c.id] ?? 'coins'} size={16} stroke={2.2} color={catColor(c.hue)} />
+                    <Text style={[styles.chipText, { color: on ? catColor(c.hue, 0.45) : colors.text }]}>{c.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <FieldLabel>{type === 'income' ? 'Masuk ke Rekening' : 'Dari Rekening'}</FieldLabel>
+            <AcctPick value={acctId} accent={accent} onPick={setAcctId} />
+          </>
+        )}
 
         {/* note */}
         <FieldLabel>Catatan</FieldLabel>
@@ -144,12 +173,11 @@ export default function AddScreen() {
             </Pressable>
           ))}
         </View>
-        <Pressable
-          onPress={save}
-          disabled={!valid}
-          style={[styles.saveBtn, { backgroundColor: valid ? accent : colors.line }]}>
+        <Pressable onPress={save} disabled={!valid} style={[styles.saveBtn, { backgroundColor: valid ? accent : colors.line }]}>
           <Icon name="check" size={20} stroke={2.6} color={valid ? '#fff' : colors.muted} />
-          <Text style={[styles.saveText, { color: valid ? '#fff' : colors.muted }]}>Simpan Transaksi</Text>
+          <Text style={[styles.saveText, { color: valid ? '#fff' : colors.muted }]}>
+            {isTransfer ? 'Simpan Transfer' : 'Simpan Transaksi'}
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -163,11 +191,11 @@ function TypeTab({
   active,
   onSelect,
 }: {
-  id: FlowType;
+  id: AddType;
   label: string;
   icon: IconName;
-  active: FlowType;
-  onSelect: (t: FlowType) => void;
+  active: AddType;
+  onSelect: (t: AddType) => void;
 }) {
   const on = active === id;
   return (
@@ -216,16 +244,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingBottom: 6 },
   headerTitle: { fontSize: 16.5, fontFamily: fonts.bold, color: colors.text },
-  iconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  iconBtn: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
   selector: { flexDirection: 'row', gap: 4, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 16, padding: 5, marginBottom: 20 },
   typeTab: { flex: 1, paddingVertical: 9, paddingHorizontal: 4, borderRadius: 13, alignItems: 'center', gap: 3 },
   typeTabText: { fontFamily: fonts.bold, fontSize: 13 },
@@ -233,6 +252,10 @@ const styles = StyleSheet.create({
   amountLabel: { fontSize: 12.5, color: colors.muted, fontFamily: fonts.semibold, marginBottom: 4 },
   amountValue: { fontSize: 40, fontFamily: fonts.extrabold, letterSpacing: -1 },
   amountRp: { fontSize: 22 },
+  transferNote: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: semantic.transfer + '12', borderWidth: 1, borderColor: semantic.transfer + '33', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 13, marginBottom: 18 },
+  transferNoteText: { flex: 1, fontSize: 12, color: colors.text, lineHeight: 17, fontFamily: fonts.regular },
+  arrowRow: { alignItems: 'center', marginTop: -4, marginBottom: 10 },
+  arrowCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: semantic.transfer, alignItems: 'center', justifyContent: 'center' },
   fieldLabel: { fontSize: 12.5, fontFamily: fonts.bold, color: colors.muted, marginHorizontal: 2, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 8, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1.5 },
@@ -240,18 +263,7 @@ const styles = StyleSheet.create({
   acctPick: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 13, borderWidth: 1.5 },
   acctDot: { width: 8, height: 8, borderRadius: 4 },
   acctPickText: { fontFamily: fonts.semibold, fontSize: 13.5 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    fontSize: 14.5,
-    color: colors.text,
-    fontFamily: fonts.medium,
-    marginBottom: 14,
-  },
+  input: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14, fontSize: 14.5, color: colors.text, fontFamily: fonts.medium, marginBottom: 14 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 },
   dateText: { fontSize: 14.5, color: colors.text, flex: 1, fontFamily: fonts.medium },
   keypadWrap: { backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.line, paddingHorizontal: 14, paddingTop: 12 },
