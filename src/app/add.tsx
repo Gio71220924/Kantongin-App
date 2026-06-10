@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName, glyphFor } from '@/components/Icon';
@@ -11,6 +11,7 @@ import {
   accounts,
   categories,
   cat as catById,
+  rp,
 } from '@/data/kantongin';
 import { useKantongin } from '@/store';
 import { catColor, catSoft, colors, fonts, oklchToHex, semantic } from '@/theme';
@@ -35,6 +36,8 @@ export default function AddScreen() {
   const [fromId, setFromId] = useState<AccountId>('bca');
   const [toId, setToId] = useState<AccountId>('jago');
   const [note, setNote] = useState('');
+  const [success, setSuccess] = useState(false);
+  const popScale = useRef(new Animated.Value(0.4)).current;
 
   const accent = semantic[type];
   const isTransfer = type === 'transfer';
@@ -62,12 +65,27 @@ export default function AddScreen() {
           cat: catId,
           acct: acctId,
         };
-    addTxn(t);
-    router.back();
+    setSuccess(true);
+    Animated.spring(popScale, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }).start();
+    setTimeout(() => {
+      addTxn(t);
+      router.back();
+    }, 1050);
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: isTransfer ? semantic.transfer + '08' : colors.bg }}>
+      {/* success overlay */}
+      {success ? (
+        <View style={styles.overlay}>
+          <Animated.View style={[styles.popCircle, { backgroundColor: accent, shadowColor: accent, transform: [{ scale: popScale }] }]}>
+            <Icon name="check" size={48} stroke={3} color="#fff" />
+          </Animated.View>
+          <Text style={styles.successTitle}>Transaksi tersimpan</Text>
+          <Text style={styles.successSub}>{isTransfer ? 'Transfer dicatat — bukan pengeluaran' : rp(amtNum)}</Text>
+        </View>
+      ) : null}
+
       {/* header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => router.back()} style={styles.iconBtn} hitSlop={8}>
@@ -242,6 +260,10 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 const styles = StyleSheet.create({
+  overlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 60, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 18 },
+  popCircle: { width: 92, height: 92, borderRadius: 46, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.33, shadowRadius: 34, shadowOffset: { width: 0, height: 14 }, elevation: 10 },
+  successTitle: { fontSize: 18, fontFamily: fonts.extrabold, color: colors.text },
+  successSub: { fontSize: 14, color: colors.muted, fontFamily: fonts.medium },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingBottom: 6 },
   headerTitle: { fontSize: 16.5, fontFamily: fonts.bold, color: colors.text },
   iconBtn: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
