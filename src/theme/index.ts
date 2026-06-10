@@ -78,3 +78,17 @@ export function withAlpha(hex: string, alpha: number): string {
     .padStart(2, '0');
   return hex + a;
 }
+
+function toRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+/** Linear sRGB blend of two hex colors. t=1 returns `a`, t=0 returns `b`. */
+export function mixHex(a: string, b: string, t: number): string {
+  const [r1, g1, b1] = toRgb(a);
+  const [r2, g2, b2] = toRgb(b);
+  const ch = (x: number, y: number) =>
+    Math.round(x * t + y * (1 - t)).toString(16).padStart(2, '0');
+  return `#${ch(r1, r2)}${ch(g1, g2)}${ch(b1, b2)}`;
+}
