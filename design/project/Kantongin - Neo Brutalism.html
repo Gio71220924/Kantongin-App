@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kantongin — Neo Brutalism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #d9d6c8;
+    background-image: radial-gradient(#c4c1b2 1.4px, transparent 1.4px);
+    background-size: 16px 16px;
+    font-family: 'Archivo', system-ui, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; overflow: hidden;
+  }
+  #stage { transform-origin: center center; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#FFD400"/>
+    <rect x="26" y="32" width="48" height="36" fill="#7C3AFF" stroke="#111" stroke-width="5"/>
+    <rect x="34" y="44" width="20" height="12" fill="#fff" stroke="#111" stroke-width="4"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="kantongin-data.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="c2-icons.jsx"></script>
+<script type="text/babel" src="c2-ui.jsx"></script>
+<script type="text/babel" src="c2-onboarding.jsx"></script>
+<script type="text/babel" src="c2-dashboard.jsx"></script>
+<script type="text/babel" src="c2-add.jsx"></script>
+<script type="text/babel" src="c2-history.jsx"></script>
+<script type="text/babel" src="c2-analytics.jsx"></script>
+<script type="text/babel" src="c2-settings.jsx"></script>
+<script type="text/babel" src="c2-detail.jsx"></script>
+<script type="text/babel" src="c2-budget.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "palette": ["#7C3AFF", "#00D6B4", "#FF5C2B", "#FFD400"],
+  "font": "Archivo",
+  "border": 3,
+  "radius": 8
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [screen, setScreen] = useState('dashboard');
+  const [txns, setTxns] = useState(window.KANTONGIN.transactions);
+  const [hidden, setHidden] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [editTxn, setEditTxn] = useState(null);
+  const [budgets, setBudgets] = useState(window.KANTONGIN.budgets);
+  const [onboarded, setOnboarded] = useState(false);
+  const [guest, setGuest] = useState(false);
+  const go = (s, payload) => {
+    if (s === 'detail') setSelected(payload);
+    if (s === 'add') setEditTxn(payload || null);
+    setScreen(s);
+  };
+  const onAdd = (tx) => setTxns(prev => [tx, ...prev]);
+  const onUpdate = (tx) => { setTxns(prev => prev.map(x => x.id === tx.id ? tx : x)); setSelected(tx); };
+  const onDelete = (id) => setTxns(prev => prev.filter(x => x.id !== id));
+
+  useEffect(() => {
+    const fit = () => {
+      const s = Math.min(1, (window.innerHeight - 24) / 874, (window.innerWidth - 24) / 402);
+      const el = document.getElementById('stage');
+      if (el) el.style.transform = `scale(${s})`;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  const p = t.palette;
+  const vars = {
+    '--c2-ink': '#141414',
+    '--c2-bg': '#FBFAF4',
+    '--c2-paper': '#FFFFFF',
+    '--c2-purple': p[0],
+    '--c2-teal': p[1],
+    '--c2-orange': p[2],
+    '--c2-yellow': p[3],
+    '--c2-pink': '#FF4D9D',
+    '--c2-muted': '#6B6B66',
+    '--c2-line': '#D8D6CC',
+    '--c2-bw': t.border + 'px',
+    '--c2-radius': t.radius + 'px',
+    fontFamily: `'${t.font}', system-ui, sans-serif`,
+  };
+
+  let body;
+  if (!onboarded) body = <C2Onboarding onDone={(g) => { setGuest(!!g); setOnboarded(true); }} />;
+  else if (screen === 'dashboard') body = <C2Dashboard go={go} txns={txns} hidden={hidden} setHidden={setHidden} guest={guest} />;
+  else if (screen === 'add') body = <C2Add key={editTxn ? editTxn.id : 'new-' + Date.now()} go={go} onAdd={onAdd} onUpdate={onUpdate} editTxn={editTxn} />;
+  else if (screen === 'detail') body = <C2Detail go={go} txn={selected} onDelete={onDelete} />;
+  else if (screen === 'budget') body = <C2Budget go={go} budgets={budgets} setBudgets={setBudgets} />;
+  else if (screen === 'history') body = <C2History go={go} txns={txns} />;
+  else if (screen === 'analytics') body = <C2Analytics go={go} />;
+  else if (screen === 'settings') body = <C2Settings go={go} guest={guest} onExitGuest={() => { setOnboarded(false); setGuest(false); }} />;
+
+  const fullScreen = !onboarded || screen === 'add' || screen === 'detail';
+
+  return (
+    <div id="stage" style={{ ...vars }}>
+      <IOSDevice width={402} height={874}>
+        <div style={{ position: 'relative', height: '100%', background: 'var(--c2-bg)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', overflow: 'hidden' }}>{body}</div>
+          {!fullScreen && <C2BottomNav screen={screen} go={go} />}
+        </div>
+      </IOSDevice>
+      <TweaksPanel>
+        <TweakSection label="Palet Warna" />
+        <TweakColor label="Palette" value={t.palette}
+          options={[
+            ['#7C3AFF', '#00D6B4', '#FF5C2B', '#FFD400'],
+            ['#2323FF', '#19C37D', '#FF3B81', '#FFE14D'],
+            ['#0E0E0E', '#00C2FF', '#FF5C00', '#C6FF3D'],
+            ['#E0249A', '#11C7C7', '#7C3AFF', '#FFD400']
+          ]}
+          onChange={(v) => setTweak('palette', v)} />
+        <TweakSection label="Tipografi" />
+        <TweakSelect label="Font" value={t.font}
+          options={['Archivo', 'Space Grotesk', 'Space Mono']}
+          onChange={(v) => setTweak('font', v)} />
+        <TweakSection label="Bentuk" />
+        <TweakSlider label="Tebal garis" value={t.border} min={2} max={5} unit="px"
+          onChange={(v) => setTweak('border', v)} />
+        <TweakSlider label="Lengkung sudut" value={t.radius} min={0} max={16} unit="px"
+          onChange={(v) => setTweak('radius', v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

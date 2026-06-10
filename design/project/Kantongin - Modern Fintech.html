@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kantongin — Modern Fintech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Figtree:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #e7e9ee;
+    background-image: radial-gradient(circle at 50% 0%, #eef0f4, #dfe2e8);
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; overflow: hidden;
+  }
+  #stage { transform-origin: center center; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#1F6FEB"/>
+    <rect x="30" y="34" width="40" height="32" rx="7" fill="#fff"/>
+    <circle cx="60" cy="50" r="5" fill="#1F6FEB"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="kantongin-data.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="c1-icons.jsx"></script>
+<script type="text/babel" src="c1-ui.jsx"></script>
+<script type="text/babel" src="c1-onboarding.jsx"></script>
+<script type="text/babel" src="c1-dashboard.jsx"></script>
+<script type="text/babel" src="c1-add.jsx"></script>
+<script type="text/babel" src="c1-detail.jsx"></script>
+<script type="text/babel" src="c1-budget.jsx"></script>
+<script type="text/babel" src="c1-history.jsx"></script>
+<script type="text/babel" src="c1-analytics.jsx"></script>
+<script type="text/babel" src="c1-settings.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "primary": "#1F6FEB",
+  "font": "Plus Jakarta Sans",
+  "radius": 22
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [screen, setScreen] = useState('dashboard');
+  const [txns, setTxns] = useState(window.KANTONGIN.transactions);
+  const [hidden, setHidden] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [editTxn, setEditTxn] = useState(null);
+  const [budgets, setBudgets] = useState(window.KANTONGIN.budgets);
+  const [onboarded, setOnboarded] = useState(false);
+  const [guest, setGuest] = useState(false);
+
+  const go = (s, payload) => {
+    if (s === 'detail') setSelected(payload);
+    if (s === 'add') setEditTxn(payload || null);
+    setScreen(s);
+  };
+  const onAdd = (tx) => setTxns(prev => [tx, ...prev]);
+  const onUpdate = (tx) => { setTxns(prev => prev.map(x => x.id === tx.id ? tx : x)); setSelected(tx); };
+  const onDelete = (id) => setTxns(prev => prev.filter(x => x.id !== id));
+
+  // scale to fit viewport
+  useEffect(() => {
+    const fit = () => {
+      const s = Math.min(1, (window.innerHeight - 24) / 874, (window.innerWidth - 24) / 402);
+      const el = document.getElementById('stage');
+      if (el) el.style.transform = `scale(${s})`;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  const vars = {
+    '--c1-bg': '#F4F6FA',
+    '--c1-card': '#FFFFFF',
+    '--c1-text': '#0F172A',
+    '--c1-muted': '#7B8794',
+    '--c1-line': '#EAEDF2',
+    '--c1-primary': t.primary,
+    '--c1-radius': t.radius + 'px',
+    fontFamily: `'${t.font}', system-ui, sans-serif`,
+  };
+
+  let body;
+  if (!onboarded) body = <C1Onboarding onDone={(g) => { setGuest(!!g); setOnboarded(true); }} />;
+  else if (screen === 'dashboard') body = <C1Dashboard go={go} txns={txns} hidden={hidden} setHidden={setHidden} guest={guest} />;
+  else if (screen === 'add') body = <C1Add key={editTxn ? editTxn.id : 'new-' + Date.now()} go={go} onAdd={onAdd} onUpdate={onUpdate} editTxn={editTxn} />;
+  else if (screen === 'detail') body = <C1Detail go={go} txn={selected} onDelete={onDelete} />;
+  else if (screen === 'budget') body = <C1Budget go={go} budgets={budgets} setBudgets={setBudgets} />;
+  else if (screen === 'history') body = <C1History go={go} txns={txns} />;
+  else if (screen === 'analytics') body = <C1Analytics go={go} />;
+  else if (screen === 'settings') body = <C1Settings go={go} guest={guest} onExitGuest={() => { setOnboarded(false); setGuest(false); }} />;
+
+  const fullScreen = !onboarded || screen === 'add' || screen === 'detail';
+
+  return (
+    <div id="stage" style={{ ...vars }}>
+      <IOSDevice width={402} height={874}>
+        <div style={{ position: 'relative', height: '100%', background: 'var(--c1-bg)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', overflow: 'hidden' }}>{body}</div>
+          {!fullScreen && <C1BottomNav screen={screen} go={go} />}
+        </div>
+      </IOSDevice>
+      <TweaksPanel>
+        <TweakSection label="Warna Merek" />
+        <TweakColor label="Primary" value={t.primary}
+          options={['#1F6FEB', '#1F8A5B', '#5B4BDB', '#0E8C8C', '#0F172A']}
+          onChange={(v) => setTweak('primary', v)} />
+        <TweakSection label="Tipografi" />
+        <TweakSelect label="Font" value={t.font}
+          options={['Plus Jakarta Sans', 'Figtree', 'Sora']}
+          onChange={(v) => setTweak('font', v)} />
+        <TweakSection label="Bentuk" />
+        <TweakSlider label="Lengkung sudut" value={t.radius} min={10} max={30} unit="px"
+          onChange={(v) => setTweak('radius', v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
