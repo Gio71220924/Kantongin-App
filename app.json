@@ -8,9 +8,12 @@
     "scheme": "kantonginapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.gio71220924.kantongin",
+      "supportsTablet": true
     },
     "android": {
+      "package": "com.gio71220924.kantongin",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
