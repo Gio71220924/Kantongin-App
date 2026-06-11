@@ -48,6 +48,13 @@ export default function AddScreen() {
   const accent = semantic[type];
   const isTransfer = type === 'transfer';
   const amtNum = parseInt(amount || '0', 10);
+
+  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const MONTHS_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const todayDisplay = useMemo(() => {
+    const d = new Date();
+    return `Hari ini · ${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
+  }, []);
   const valid = amtNum > 0 && (!isTransfer || fromId !== toId);
   const cats = categories.filter((c) => (type === 'income' ? INCOME_CATS : EXPENSE_CATS).includes(c.id));
 
@@ -63,7 +70,7 @@ export default function AddScreen() {
     if (!valid) return;
     const base = isEdit
       ? { id: editTxn!.id, amount: amtNum, date: editTxn!.date, time: editTxn!.time }
-      : { id: 'n' + Date.now(), amount: amtNum, date: '2026-06-04', time: 'Baru' };
+      : { id: 'n' + Date.now(), amount: amtNum, date: todayISO, time: 'Baru' };
     const t: Transaction = isTransfer
       ? { ...base, type: 'transfer', title: note || 'Transfer kantong', from: fromId, to: toId }
       : {
@@ -187,7 +194,7 @@ export default function AddScreen() {
         {/* date */}
         <View style={styles.dateRow}>
           <Icon name="calendar" size={18} color={colors.muted} />
-          <Text style={styles.dateText}>Hari ini · 4 Juni 2026</Text>
+          <Text style={styles.dateText}>{todayDisplay}</Text>
           <Icon name="chevron" size={16} color={colors.muted} />
         </View>
       </ScrollView>
