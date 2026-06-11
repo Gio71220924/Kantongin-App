@@ -6,31 +6,39 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { BarList, Card, Donut, SectionHead, TrendChart } from '@/components/primitives';
-import { acct, byAccount, byCategory, cat, rp, summary, trend } from '@/data/kantongin';
+import { acct, cat, rp } from '@/data/kantongin';
+import { computeByAccount, computeByCategory, computeSummary, computeTrend, currentYM } from '@/lib/stats';
+import { useKantongin } from '@/store';
 import { Palette, catColor, fonts, mixHex, oklchToHex, radius, semantic, useColors } from '@/theme';
 
 export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const [month, setMonth] = useState('Jun');
+  const { txns } = useKantongin();
+
+  const trendData = useMemo(() => computeTrend(txns), [txns]);
+  const [selectedYM, setSelectedYM] = useState(() => trendData[trendData.length - 1]?.ym ?? currentYM());
+
+  const summary = useMemo(() => computeSummary(txns, selectedYM), [txns, selectedYM]);
+  const byCategory = useMemo(() => computeByCategory(txns, selectedYM), [txns, selectedYM]);
+  const byAccount = useMemo(() => computeByAccount(txns, selectedYM), [txns, selectedYM]);
 
   const catSegs = byCategory.map((b) => ({ value: b.amount, color: catColor(cat(b.id).hue) }));
   const catRows = byCategory.map((b) => ({ label: cat(b.id).label, value: b.amount, color: catColor(cat(b.id).hue) }));
   const acctRows = byAccount.map((b) => ({ label: acct(b.id).name, value: b.amount, color: oklchToHex(0.55, 0.13, acct(b.id).hue) }));
-  const transferTotal = trend.find((d) => d.m === 'Jun')!.transfer;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 18, paddingBottom: 8 }}>
         <Text style={styles.h1}>Analitik</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingBottom: 4 }}>
-          {trend.map((d) => {
-            const on = month === d.m;
+          {trendData.map((d) => {
+            const on = selectedYM === d.ym;
             return (
               <Pressable
-                key={d.m}
-                onPress={() => setMonth(d.m)}
+                key={d.ym}
+                onPress={() => setSelectedYM(d.ym)}
                 style={[styles.chip, on ? { backgroundColor: colors.primary } : { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }]}>
                 <Text style={[styles.chipText, { color: on ? '#fff' : colors.muted }]}>{d.m}</Text>
               </Pressable>
@@ -48,7 +56,6 @@ export default function AnalyticsScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.catTopLabel}>Total pengeluaran {summary.month}</Text>
               <Text style={styles.catTopValue}>{rp(summary.expense)}</Text>
-              <Text style={styles.catTopDelta}>↓ 7,5% dari bulan lalu</Text>
             </View>
           </View>
           <BarList rows={catRows} />
@@ -73,10 +80,10 @@ export default function AnalyticsScreen() {
               <Text style={styles.legendText}>Transfer</Text>
             </View>
           </View>
-          <TrendChart data={trend} />
+          <TrendChart data={trendData} />
         </Card>
 
-        {/* transfer activity — kept separate */}
+        {/* transfer activity */}
         <SectionHead title="Aktivitas Transfer" />
         <LinearGradient
           colors={[semantic.transfer, mixHex(semantic.transfer, '#14102e', 0.6)]}
@@ -89,7 +96,7 @@ export default function AnalyticsScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.transferLabel}>Total dipindahkan {summary.month}</Text>
-              <Text style={styles.transferValue}>{rp(transferTotal)}</Text>
+              <Text style={styles.transferValue}>{rp(summary.transfer)}</Text>
             </View>
           </View>
           <Text style={styles.transferNote}>
@@ -110,7 +117,6 @@ const makeStyles = (colors: Palette) =>
   catTop: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 },
   catTopLabel: { fontSize: 12.5, color: colors.muted, fontFamily: fonts.regular },
   catTopValue: { fontSize: 23, fontFamily: fonts.extrabold, color: colors.text, letterSpacing: -0.5, marginTop: 2, marginBottom: 6 },
-  catTopDelta: { fontSize: 12, color: semantic.income, fontFamily: fonts.semibold },
   legend: { flexDirection: 'row', gap: 16, marginBottom: 14 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 3 },

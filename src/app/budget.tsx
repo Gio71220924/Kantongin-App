@@ -5,20 +5,19 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, glyphFor } from '@/components/Icon';
-import { CategoryId, byCategory, cat as catById, rp } from '@/data/kantongin';
+import { CategoryId, cat as catById, rp } from '@/data/kantongin';
+import { computeByCategory, currentYM } from '@/lib/stats';
 import { useKantongin } from '@/store';
 import { Palette, catColor, catSoft, fonts, mixHex, semantic, useColors } from '@/theme';
 
 const NEAR = '#E8893B';
 
-function spentOf(id: CategoryId): number {
-  const b = byCategory.find((x) => x.id === id);
-  return b ? b.amount : 0;
-}
-
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
-  const { budgets, setBudgets } = useKantongin();
+  const { txns, budgets, setBudgets } = useKantongin();
+  const yearMonth = useMemo(() => currentYM(), []);
+  const spentByCategory = useMemo(() => computeByCategory(txns, yearMonth), [txns, yearMonth]);
+  const spentOf = (id: CategoryId) => spentByCategory.find((x) => x.id === id)?.amount ?? 0;
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [editing, setEditing] = useState<CategoryId | null>(null);
