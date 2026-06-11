@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -11,6 +12,7 @@ import {
 } from '@/data/kantongin';
 
 const STORAGE_KEY = 'kantongin:v1';
+const CHUNK_SIZE = 1900; // SecureStore limit is 2048 bytes per item
 
 type Balances = Record<AccountId, number>;
 
@@ -29,6 +31,31 @@ function applyTxn(b: Balances, t: Transaction, sign: 1 | -1): Balances {
     next[t.to] = (next[t.to] ?? 0) + sign * t.amount;
   }
   return next;
+}
+
+async function secureSetJSON(data: object): Promise<void> {
+  const str = JSON.stringify(data);
+  const n = Math.ceil(str.length / CHUNK_SIZE);
+  await SecureStore.setItemAsync(`${STORAGE_KEY}:n`, String(n));
+  for (let i = 0; i < n; i++) {
+    await SecureStore.setItemAsync(
+      `${STORAGE_KEY}:${i}`,
+      str.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE),
+    );
+  }
+}
+
+async function secureGetJSON(): Promise<string | null> {
+  const nStr = await SecureStore.getItemAsync(`${STORAGE_KEY}:n`);
+  if (!nStr) return null;
+  const n = parseInt(nStr, 10);
+  const parts: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const chunk = await SecureStore.getItemAsync(`${STORAGE_KEY}:${i}`);
+    if (chunk === null) return null;
+    parts.push(chunk);
+  }
+  return parts.join('');
 }
 
 interface KantonginState {
@@ -62,7 +89,16 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        let raw = await secureGetJSON();
+        if (!raw) {
+          // Migrate from AsyncStorage if it exists (one-time upgrade path)
+          const legacy = await AsyncStorage.getItem(STORAGE_KEY);
+          if (legacy) {
+            raw = legacy;
+            await secureSetJSON(JSON.parse(legacy));
+            await AsyncStorage.removeItem(STORAGE_KEY);
+          }
+        }
         if (raw) {
           const d = JSON.parse(raw);
           if (Array.isArray(d.txns)) setTxns(d.txns);
@@ -80,7 +116,7 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ txns, budgets, onboarded, guest, accountBalances })).catch(() => {});
+    secureSetJSON({ txns, budgets, onboarded, guest, accountBalances }).catch(() => {});
   }, [hydrated, txns, budgets, onboarded, guest, accountBalances]);
 
   const totalBalance = useMemo(() => Object.values(accountBalances).reduce((s, v) => s + v, 0), [accountBalances]);

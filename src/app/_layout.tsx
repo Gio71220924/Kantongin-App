@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AppLock } from '@/components/AppLock';
 import { KantonginProvider } from '@/store';
 import { ThemeProvider, useColors, useThemeMode } from '@/theme';
 
@@ -52,9 +53,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <KantonginProvider>
-          <RootNavigator />
-        </KantonginProvider>
+        <AppLock>
+          <KantonginProvider>
+            <RootNavigator />
+          </KantonginProvider>
+        </AppLock>
       </ThemeProvider>
     </SafeAreaProvider>
   );

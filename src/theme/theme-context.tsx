@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
 
@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
+    SecureStore.getItemAsync(STORAGE_KEY)
       .then((v) => {
         if (v === 'light' || v === 'dark' || v === 'system') setModeState(v);
       })
@@ -33,7 +33,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setMode = (m: ThemeMode) => {
     setModeState(m);
-    AsyncStorage.setItem(STORAGE_KEY, m).catch(() => {});
+    SecureStore.setItemAsync(STORAGE_KEY, m).catch(() => {});
   };
 
   const scheme: 'light' | 'dark' = mode === 'system' ? (system === 'dark' ? 'dark' : 'light') : mode;
