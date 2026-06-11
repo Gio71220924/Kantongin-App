@@ -206,6 +206,7 @@ export default function AddScreen() {
           onChangeText={setNote}
           placeholder="Tulis catatan (opsional)"
           placeholderTextColor={colors.muted}
+          maxLength={200}
           style={styles.input}
         />
 
