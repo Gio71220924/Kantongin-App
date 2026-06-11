@@ -4,7 +4,7 @@ import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
-import { AccountId, accounts, rp } from '@/data/kantongin';
+import { accounts, rp } from '@/data/kantongin';
 import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
 import { Palette, fonts, oklchToHex, semantic, useColors, withAlpha } from '@/theme';
@@ -45,7 +45,7 @@ export default function OnboardingScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [step, setStep] = useState(0);
-  const [picked, setPicked] = useState<Record<AccountId, boolean>>({ bca: true, jago: true, seabank: false, bri: false });
+  const [picked, setPicked] = useState<Record<string, boolean>>({ bca: true, jago: true, seabank: false, bri: false });
   const [guest, setGuestLocal] = useState(false);
   const [success, setSuccess] = useState(false);
   const slides = useMemo(() => buildSlides(colors.primary), [colors.primary]);

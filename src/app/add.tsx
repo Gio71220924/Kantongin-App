@@ -5,10 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName, glyphFor } from '@/components/Icon';
 import {
-  AccountId,
   CategoryId,
   Transaction,
-  accounts,
   categories,
   cat as catById,
   rp,
@@ -32,7 +30,7 @@ export default function AddScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { addTxn, updateTxn, txns } = useKantongin();
+  const { addTxn, updateTxn, txns, accounts, addAccount } = useKantongin();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const editTxn = id ? txns.find((x) => x.id === id) : undefined;
   const isEdit = !!editTxn;
@@ -40,9 +38,9 @@ export default function AddScreen() {
   const [type, setType] = useState<AddType>(editTxn ? editTxn.type : 'expense');
   const [amount, setAmount] = useState(editTxn ? String(editTxn.amount) : '');
   const [catId, setCatId] = useState<CategoryId>(editTxn && editTxn.type !== 'transfer' ? editTxn.cat : 'makan');
-  const [acctId, setAcctId] = useState<AccountId>(editTxn && editTxn.type !== 'transfer' ? editTxn.acct : 'jago');
-  const [fromId, setFromId] = useState<AccountId>(editTxn && editTxn.type === 'transfer' ? editTxn.from : 'bca');
-  const [toId, setToId] = useState<AccountId>(editTxn && editTxn.type === 'transfer' ? editTxn.to : 'jago');
+  const [acctId, setAcctId] = useState<string>(editTxn && editTxn.type !== 'transfer' ? editTxn.acct : (accounts[0]?.id ?? 'jago'));
+  const [fromId, setFromId] = useState<string>(editTxn && editTxn.type === 'transfer' ? editTxn.from : (accounts[0]?.id ?? 'bca'));
+  const [toId, setToId] = useState<string>(editTxn && editTxn.type === 'transfer' ? editTxn.to : (accounts[1]?.id ?? 'jago'));
   const [note, setNote] = useState(editTxn ? editTxn.title : '');
   const [success, setSuccess] = useState(false);
   const popScale = useRef(new Animated.Value(0.4)).current;
@@ -163,7 +161,7 @@ export default function AddScreen() {
               accent={accent}
               onPick={(v) => {
                 setFromId(v);
-                if (v === toId) setToId(accounts.find((a) => a.id !== v)!.id);
+                if (v === toId) setToId(accounts.find((a) => a.id !== v)?.id ?? toId);
               }}
             />
 
@@ -269,19 +267,36 @@ function TypeTab({
   );
 }
 
+const ACCT_HUES = [28, 218, 168, 256, 330, 45, 150, 290];
+
 function AcctPick({
   value,
   onPick,
   accent,
   exclude,
 }: {
-  value: AccountId;
-  onPick: (id: AccountId) => void;
+  value: string;
+  onPick: (id: string) => void;
   accent: string;
-  exclude?: AccountId;
+  exclude?: string;
 }) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { accounts, addAccount } = useKantongin();
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState('');
+
+  const confirmAdd = () => {
+    const name = newName.trim();
+    if (!name) return;
+    const id = 'u' + Date.now();
+    const hue = ACCT_HUES[accounts.length % ACCT_HUES.length];
+    addAccount({ id, name, kind: 'Kantong', last4: '', balance: 0, hue });
+    onPick(id);
+    setNewName('');
+    setAdding(false);
+  };
+
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }} style={{ marginBottom: 18 }}>
       {accounts
@@ -298,6 +313,32 @@ function AcctPick({
             </Pressable>
           );
         })}
+      {adding ? (
+        <View style={[styles.acctPick, { borderColor: accent, backgroundColor: accent + '08', gap: 6 }]}>
+          <TextInput
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="Nama kantong"
+            placeholderTextColor={colors.muted}
+            autoFocus
+            onSubmitEditing={confirmAdd}
+            style={[styles.acctPickText, { color: colors.text, minWidth: 100, padding: 0 }]}
+          />
+          <Pressable onPress={confirmAdd} hitSlop={8}>
+            <Icon name="check" size={16} stroke={2.6} color={accent} />
+          </Pressable>
+          <Pressable onPress={() => { setAdding(false); setNewName(''); }} hitSlop={8}>
+            <Icon name="close" size={14} stroke={2.4} color={colors.muted} />
+          </Pressable>
+        </View>
+      ) : (
+        <Pressable
+          onPress={() => setAdding(true)}
+          style={[styles.acctPick, { borderColor: colors.line, backgroundColor: colors.card, borderStyle: 'dashed' }]}>
+          <Icon name="plus" size={14} stroke={2.4} color={colors.muted} />
+          <Text style={[styles.acctPickText, { color: colors.muted }]}>Baru</Text>
+        </Pressable>
+      )}
     </ScrollView>
   );
 }

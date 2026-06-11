@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
 import { AccountCard, Card, Donut, SectionHead, TxnRow } from '@/components/primitives';
-import { accounts, cat, rp } from '@/data/kantongin';
+import { cat, rp } from '@/data/kantongin';
 import { computeByCategory, computeSummary, currentYM } from '@/lib/stats';
 import { useKantongin } from '@/store';
 import { Palette, catColor, fonts, mixHex, radius, semantic, useColors } from '@/theme';
@@ -27,7 +27,7 @@ function Tile({ label, value, color, icon }: { label: string; value: number; col
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
-  const { txns, hidden, setHidden, guest, onboarded, accountBalances, totalBalance } = useKantongin();
+  const { txns, hidden, setHidden, guest, onboarded, accountBalances, totalBalance, accounts } = useKantongin();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const yearMonth = useMemo(() => currentYM(), []);

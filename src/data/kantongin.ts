@@ -3,7 +3,7 @@
  * Ported from the design bundle's kantongin-data.js into typed TS.
  */
 
-export type AccountId = 'bca' | 'jago' | 'seabank' | 'bri';
+export type AccountId = string;
 export type CategoryId =
   | 'makan' | 'transport' | 'belanja' | 'tagihan'
   | 'hiburan' | 'kesehatan' | 'gaji' | 'freelance' | 'hadiah' | 'transfer';
@@ -145,8 +145,14 @@ export function rp(n: number): string {
   return 'Rp' + groupId(n);
 }
 
+/** @deprecated Use findAcct with the store's accounts array for user-created accounts. */
 export function acct(id: AccountId): Account {
-  return accounts.find((a) => a.id === id)!;
+  return accounts.find((a) => a.id === id) ?? { id, name: id, kind: '', last4: '', balance: 0, hue: 220 };
+}
+
+/** Lookup an account from a dynamic list; falls back to a placeholder so crashes don't happen. */
+export function findAcct(list: Account[], id: string): Account {
+  return list.find((a) => a.id === id) ?? { id, name: id, kind: '', last4: '', balance: 0, hue: 220 };
 }
 export function cat(id: CategoryId): Category {
   return categories.find((c) => c.id === id)!;

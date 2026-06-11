@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
+  Account,
   AccountId,
   Budget,
   Transaction,
@@ -65,6 +66,9 @@ interface KantonginState {
   deleteTxn: (id: string) => void;
   budgets: Budget[];
   setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
+  accounts: Account[];
+  addAccount: (a: Account) => void;
+  deleteAccount: (id: string) => void;
   accountBalances: Balances;
   totalBalance: number;
   hidden: boolean;
@@ -80,6 +84,7 @@ const KantonginContext = createContext<KantonginState | null>(null);
 export function KantonginProvider({ children }: { children: React.ReactNode }) {
   const [txns, setTxns] = useState<Transaction[]>(seedTxns);
   const [budgets, setBudgets] = useState<Budget[]>(seedBudgets);
+  const [accounts, setAccounts] = useState<Account[]>(seedAccounts);
   const [accountBalances, setAccountBalances] = useState<Balances>(seedBalances);
   const [hidden, setHidden] = useState(false);
   const [guest, setGuest] = useState(false);
@@ -103,6 +108,7 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
           const d = JSON.parse(raw);
           if (Array.isArray(d.txns)) setTxns(d.txns);
           if (Array.isArray(d.budgets)) setBudgets(d.budgets);
+          if (Array.isArray(d.accounts)) setAccounts(d.accounts);
           if (typeof d.onboarded === 'boolean') setOnboarded(d.onboarded);
           if (typeof d.guest === 'boolean') setGuest(d.guest);
           if (d.accountBalances && typeof d.accountBalances === 'object') setAccountBalances(d.accountBalances);
@@ -116,7 +122,7 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    secureSetJSON({ txns, budgets, onboarded, guest, accountBalances }).catch(() => {});
+    secureSetJSON({ txns, budgets, accounts, onboarded, guest, accountBalances }).catch(() => {});
   }, [hydrated, txns, budgets, onboarded, guest, accountBalances]);
 
   const totalBalance = useMemo(() => Object.values(accountBalances).reduce((s, v) => s + v, 0), [accountBalances]);
@@ -143,6 +149,9 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
       },
       budgets,
       setBudgets,
+      accounts,
+      addAccount: (a) => setAccounts((prev) => [...prev, a]),
+      deleteAccount: (id) => setAccounts((prev) => prev.filter((a) => a.id !== id)),
       accountBalances,
       totalBalance,
       hidden,
@@ -152,7 +161,7 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
       onboarded,
       setOnboarded,
     }),
-    [txns, budgets, accountBalances, totalBalance, hidden, guest, onboarded],
+    [txns, budgets, accounts, accountBalances, totalBalance, hidden, guest, onboarded],
   );
 
   if (!hydrated) return null;

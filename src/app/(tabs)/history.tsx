@@ -5,12 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { Card, TxnRow } from '@/components/primitives';
-import { AccountId, TxnType, accounts, dayLabel, rp } from '@/data/kantongin';
+import { TxnType, dayLabel, rp } from '@/data/kantongin';
 import { useKantongin } from '@/store';
 import { Palette, fonts, oklchToHex, semantic, useColors } from '@/theme';
 
 type TypeFilter = 'all' | TxnType;
-type AcctFilter = 'all' | AccountId;
+type AcctFilter = 'all' | string;
 
 const TYPE_CHIPS: { id: TypeFilter; label: string; color?: string }[] = [
   { id: 'all', label: 'Semua' },
@@ -33,7 +33,7 @@ function Chip({ on, color, label, onPress }: { on: boolean; color: string; label
 
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
-  const { txns } = useKantongin();
+  const { txns, accounts } = useKantongin();
   const [typeF, setTypeF] = useState<TypeFilter>('all');
   const [acctF, setAcctF] = useState<AcctFilter>('all');
   const [q, setQ] = useState('');

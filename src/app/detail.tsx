@@ -4,7 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName, glyphFor } from '@/components/Icon';
-import { acct, cat as catById, dayLabel, rp } from '@/data/kantongin';
+import { cat as catById, dayLabel, findAcct, rp } from '@/data/kantongin';
 import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
 import { Palette, catColor, catSoft, fonts, oklchToHex, semantic, useColors } from '@/theme';
@@ -16,7 +16,7 @@ export default function DetailScreen() {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { txns, deleteTxn } = useKantongin();
+  const { txns, deleteTxn, accounts } = useKantongin();
   const [confirm, setConfirm] = useState(false);
   const txn = txns.find((x) => x.id === id);
 
@@ -80,7 +80,7 @@ export default function DetailScreen() {
         {isTransfer ? (
           <View style={styles.routeCard}>
             <View style={styles.routeRow}>
-              {[acct(txn.from), acct(txn.to)].map((a, i) => (
+              {[findAcct(accounts, txn.from), findAcct(accounts, txn.to)].map((a, i) => (
                 <View key={a.id} style={styles.routeItemWrap}>
                   <View style={styles.routeItem}>
                     <Text style={styles.routeCap}>{i === 0 ? 'DARI' : 'KE'}</Text>
@@ -106,7 +106,7 @@ export default function DetailScreen() {
         <View style={styles.fieldsCard}>
           {!isTransfer ? <Field label="Kategori" value={c ? c.label : '—'} /> : null}
           {!isTransfer ? (
-            <Field label={txn.type === 'income' ? 'Masuk ke' : 'Rekening'} value={`${acct(txn.acct).name} ·· ${acct(txn.acct).last4}`} />
+            <Field label={txn.type === 'income' ? 'Masuk ke' : 'Rekening'} value={(() => { const a = findAcct(accounts, txn.acct); return a.last4 ? `${a.name} ·· ${a.last4}` : a.name; })()} />
           ) : null}
           <Field label="Tanggal" value={`${dayLabel(txn.date)}, 2026`} />
           <Field label="Waktu" value={txn.time === 'Baru' ? 'Baru saja' : txn.time} />

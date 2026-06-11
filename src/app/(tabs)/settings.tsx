@@ -3,7 +3,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
-import { accounts } from '@/data/kantongin';
 import { useKantongin } from '@/store';
 import { Palette, ThemeMode, fonts, oklchToHex, semantic, useColors, useThemeMode, withAlpha } from '@/theme';
 
@@ -69,7 +68,7 @@ const APPEARANCE_OPTS: { label: string; value: ThemeMode }[] = [
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { guest, setGuest } = useKantongin();
+  const { guest, setGuest, accounts } = useKantongin();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { mode, setMode } = useThemeMode();

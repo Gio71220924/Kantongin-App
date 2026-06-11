@@ -11,10 +11,11 @@ import { Icon, IconName, glyphFor } from '@/components/Icon';
 import {
   Account,
   Transaction,
-  acct,
   cat,
+  findAcct,
   rp,
 } from '@/data/kantongin';
+import { useKantongin } from '@/store';
 import { Palette, catColor, catSoft, fonts, oklchToHex, radius, semantic, useColors } from '@/theme';
 
 /* ── Card ────────────────────────────────────────────────── */
@@ -109,6 +110,7 @@ export function AccountCard({ a, onPress }: { a: Account; onPress?: () => void }
 export function TxnRow({ t, onPress }: { t: Transaction; onPress?: () => void }) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { accounts } = useKantongin();
   const isTransfer = t.type === 'transfer';
   const c = isTransfer ? null : cat(t.cat);
   const hue = isTransfer ? 220 : c!.hue;
@@ -120,15 +122,15 @@ export function TxnRow({ t, onPress }: { t: Transaction; onPress?: () => void })
   let amount: string;
   let amtColor: string;
   if (isTransfer) {
-    sub = `${acct(t.from).name} → ${acct(t.to).name}`;
+    sub = `${findAcct(accounts, t.from).name} → ${findAcct(accounts, t.to).name}`;
     amount = rp(t.amount);
     amtColor = semantic.transfer;
   } else if (t.type === 'income') {
-    sub = `${acct(t.acct).name} · ${c!.label}`;
+    sub = `${findAcct(accounts, t.acct).name} · ${c!.label}`;
     amount = '+' + rp(t.amount);
     amtColor = semantic.income;
   } else {
-    sub = `${acct(t.acct).name} · ${c!.label}`;
+    sub = `${findAcct(accounts, t.acct).name} · ${c!.label}`;
     amount = '−' + rp(t.amount);
     amtColor = colors.text;
   }

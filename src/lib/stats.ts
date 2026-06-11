@@ -1,4 +1,4 @@
-import { AccountId, CategoryId, Transaction } from '@/data/kantongin';
+import { CategoryId, Transaction } from '@/data/kantongin';
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -35,8 +35,8 @@ export function computeByCategory(txns: Transaction[], yearMonth: string): { id:
   return [...map.entries()].map(([id, amount]) => ({ id, amount })).sort((a, b) => b.amount - a.amount);
 }
 
-export function computeByAccount(txns: Transaction[], yearMonth: string): { id: AccountId; amount: number }[] {
-  const map = new Map<AccountId, number>();
+export function computeByAccount(txns: Transaction[], yearMonth: string): { id: string; amount: number }[] {
+  const map = new Map<string, number>();
   for (const t of txns) {
     if (ym(t) === yearMonth && t.type === 'expense') {
       map.set(t.acct, (map.get(t.acct) ?? 0) + t.amount);

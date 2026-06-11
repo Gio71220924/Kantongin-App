@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { BarList, Card, Donut, SectionHead, TrendChart } from '@/components/primitives';
-import { acct, cat, rp } from '@/data/kantongin';
+import { cat, findAcct, rp } from '@/data/kantongin';
 import { computeByAccount, computeByCategory, computeSummary, computeTrend, currentYM } from '@/lib/stats';
 import { useKantongin } from '@/store';
 import { Palette, catColor, fonts, mixHex, oklchToHex, radius, semantic, useColors } from '@/theme';
@@ -15,7 +15,7 @@ export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { txns } = useKantongin();
+  const { txns, accounts } = useKantongin();
 
   const trendData = useMemo(() => computeTrend(txns), [txns]);
   const [selectedYM, setSelectedYM] = useState(() => trendData[trendData.length - 1]?.ym ?? currentYM());
@@ -26,7 +26,7 @@ export default function AnalyticsScreen() {
 
   const catSegs = byCategory.map((b) => ({ value: b.amount, color: catColor(cat(b.id).hue) }));
   const catRows = byCategory.map((b) => ({ label: cat(b.id).label, value: b.amount, color: catColor(cat(b.id).hue) }));
-  const acctRows = byAccount.map((b) => ({ label: acct(b.id).name, value: b.amount, color: oklchToHex(0.55, 0.13, acct(b.id).hue) }));
+  const acctRows = byAccount.map((b) => { const a = findAcct(accounts, b.id); return { label: a.name, value: b.amount, color: oklchToHex(0.55, 0.13, a.hue) }; });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
