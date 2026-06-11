@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,19 +7,21 @@ import { Icon } from '@/components/Icon';
 import { Card, TxnRow } from '@/components/primitives';
 import { AccountId, TxnType, accounts, dayLabel, rp } from '@/data/kantongin';
 import { useKantongin } from '@/store';
-import { colors, fonts, oklchToHex, semantic } from '@/theme';
+import { Palette, fonts, oklchToHex, semantic, useColors } from '@/theme';
 
 type TypeFilter = 'all' | TxnType;
 type AcctFilter = 'all' | AccountId;
 
-const TYPE_CHIPS: { id: TypeFilter; label: string; color: string }[] = [
-  { id: 'all', label: 'Semua', color: colors.primary },
+const TYPE_CHIPS: { id: TypeFilter; label: string; color?: string }[] = [
+  { id: 'all', label: 'Semua' },
   { id: 'income', label: 'Pemasukan', color: semantic.income },
   { id: 'expense', label: 'Pengeluaran', color: semantic.expense },
   { id: 'transfer', label: 'Transfer', color: semantic.transfer },
 ];
 
 function Chip({ on, color, label, onPress }: { on: boolean; color: string; label: string; onPress: () => void }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Pressable
       onPress={onPress}
@@ -35,6 +37,8 @@ export default function HistoryScreen() {
   const [typeF, setTypeF] = useState<TypeFilter>('all');
   const [acctF, setAcctF] = useState<AcctFilter>('all');
   const [q, setQ] = useState('');
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const filtered = txns.filter((t) => {
     if (typeF !== 'all' && t.type !== typeF) return false;
@@ -73,7 +77,7 @@ export default function HistoryScreen() {
         {/* type filter */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
           {TYPE_CHIPS.map((c) => (
-            <Chip key={c.id} on={typeF === c.id} color={c.color} label={c.label} onPress={() => setTypeF(c.id)} />
+            <Chip key={c.id} on={typeF === c.id} color={c.color ?? colors.primary} label={c.label} onPress={() => setTypeF(c.id)} />
           ))}
         </ScrollView>
 
@@ -111,7 +115,8 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   h1: { fontSize: 28, fontFamily: fonts.extrabold, color: colors.text, letterSpacing: -0.6, marginBottom: 14 },
   search: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 13, marginBottom: 12 },
   searchInput: { flex: 1, fontFamily: fonts.medium, fontSize: 14.5, color: colors.text, padding: 0 },

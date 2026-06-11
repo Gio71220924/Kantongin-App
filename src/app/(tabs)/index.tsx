@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Href, Redirect, router } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,9 +8,11 @@ import { Icon, IconName } from '@/components/Icon';
 import { AccountCard, Card, Donut, SectionHead, TxnRow } from '@/components/primitives';
 import { accounts, byCategory, cat, rp, summary, totalBalance } from '@/data/kantongin';
 import { useKantongin } from '@/store';
-import { catColor, colors, fonts, mixHex, radius, semantic } from '@/theme';
+import { Palette, catColor, fonts, mixHex, radius, semantic, useColors } from '@/theme';
 
 function Tile({ label, value, color, icon }: { label: string; value: number; color: string; icon: IconName }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.tile}>
       <View style={styles.tileHead}>
@@ -24,6 +27,8 @@ function Tile({ label, value, color, icon }: { label: string; value: number; col
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { txns, hidden, setHidden, guest, onboarded } = useKantongin();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   if (!onboarded) return <Redirect href={'/onboarding' as Href} />;
 
@@ -140,7 +145,8 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   greeting: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 },
   avatar: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#fff', fontFamily: fonts.bold, fontSize: 17 },

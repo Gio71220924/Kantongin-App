@@ -1,16 +1,18 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { BarList, Card, Donut, SectionHead, TrendChart } from '@/components/primitives';
 import { acct, byAccount, byCategory, cat, rp, summary, trend } from '@/data/kantongin';
-import { catColor, colors, fonts, mixHex, oklchToHex, radius, semantic } from '@/theme';
+import { Palette, catColor, fonts, mixHex, oklchToHex, radius, semantic, useColors } from '@/theme';
 
 export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [month, setMonth] = useState('Jun');
 
   const catSegs = byCategory.map((b) => ({ value: b.amount, color: catColor(cat(b.id).hue) }));
@@ -100,7 +102,8 @@ export default function AnalyticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   h1: { fontSize: 28, fontFamily: fonts.extrabold, color: colors.text, letterSpacing: -0.6, marginBottom: 12 },
   chip: { paddingVertical: 7, paddingHorizontal: 15, borderRadius: 999 },
   chipText: { fontFamily: fonts.semibold, fontSize: 13 },
