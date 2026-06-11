@@ -150,12 +150,14 @@ export function cat(id: CategoryId): Category {
   return categories.find((c) => c.id === id)!;
 }
 
-const DAY_LABELS: Record<string, string> = {
-  '2026-06-04': 'Hari ini',
-  '2026-06-03': 'Kemarin',
-};
 export function dayLabel(d: string): string {
-  if (DAY_LABELS[d]) return DAY_LABELS[d];
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const yest = new Date(today);
+  yest.setDate(today.getDate() - 1);
+  const yesterdayStr = yest.toISOString().slice(0, 10);
+  if (d === todayStr) return 'Hari ini';
+  if (d === yesterdayStr) return 'Kemarin';
   const dt = new Date(d + 'T00:00:00');
   return dt.getDate() + ' ' + MONTHS[dt.getMonth()];
 }
