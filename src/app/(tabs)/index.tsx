@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { Href, Redirect, router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,7 +23,9 @@ function Tile({ label, value, color, icon }: { label: string; value: number; col
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
-  const { txns, hidden, setHidden, guest } = useKantongin();
+  const { txns, hidden, setHidden, guest, onboarded } = useKantongin();
+
+  if (!onboarded) return <Redirect href={'/onboarding' as Href} />;
 
   const segs = byCategory.map((b) => ({ value: b.amount, color: catColor(cat(b.id).hue) }));
   const recent = txns.slice(0, 5);

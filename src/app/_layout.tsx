@@ -38,6 +38,7 @@ export default function RootLayout() {
         <StatusBar style="dark" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
           <Stack.Screen name="add" options={{ presentation: 'modal' }} />
           <Stack.Screen name="detail" />
           <Stack.Screen name="budget" />
