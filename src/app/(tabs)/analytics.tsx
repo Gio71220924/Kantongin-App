@@ -58,13 +58,17 @@ export default function AnalyticsScreen() {
               <Text style={styles.catTopValue}>{rp(summary.expense)}</Text>
             </View>
           </View>
-          <BarList rows={catRows} />
+          {catRows.length > 0 ? <BarList rows={catRows} /> : (
+            <Text style={styles.empty}>Belum ada pengeluaran bulan ini.</Text>
+          )}
         </Card>
 
         {/* spending per account */}
         <SectionHead title="Pengeluaran per Kantong" />
         <Card style={{ marginBottom: 20 }}>
-          <BarList rows={acctRows} />
+          {acctRows.length > 0 ? <BarList rows={acctRows} /> : (
+            <Text style={styles.empty}>Belum ada pengeluaran bulan ini.</Text>
+          )}
         </Card>
 
         {/* monthly trend */}
@@ -121,6 +125,7 @@ const makeStyles = (colors: Palette) =>
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 3 },
   legendText: { fontSize: 12.5, color: colors.text, fontFamily: fonts.semibold },
+  empty: { textAlign: 'center', color: colors.muted, paddingVertical: 18, fontSize: 13.5, fontFamily: fonts.medium },
   transferCard: { borderRadius: radius, padding: 18, overflow: 'hidden' },
   transferHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   transferIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },

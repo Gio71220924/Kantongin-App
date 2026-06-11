@@ -122,6 +122,7 @@ export default function DashboardScreen() {
       <Card style={styles.categoryCard}>
         <Donut segments={segs} size={132} thickness={20} centerTop="Total keluar" centerBottom={rp(summary.expense)} />
         <View style={{ flex: 1, gap: 8 }}>
+          {byCategory.length === 0 ? <Text style={styles.emptyCategory}>Belum ada{'\n'}pengeluaran.</Text> : null}
           {byCategory.slice(0, 5).map((b) => {
             const c = cat(b.id);
             const pct = Math.round((b.amount / summary.expense) * 100);
@@ -205,4 +206,5 @@ const makeStyles = (colors: Palette) =>
   legendLabel: { fontSize: 12.5, color: colors.text, flex: 1, fontFamily: fonts.medium },
   legendPct: { fontSize: 12, color: colors.muted, fontFamily: fonts.semibold },
   txnDivider: { borderTopWidth: 1, borderTopColor: colors.line },
+  emptyCategory: { fontSize: 12.5, color: colors.muted, fontFamily: fonts.medium, textAlign: 'center' },
 });
