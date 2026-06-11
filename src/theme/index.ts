@@ -3,15 +3,37 @@
  * Ported from the design's `--c1-*` CSS vars + c1-ui semantic colors.
  */
 
-/** Surface / text palette (from "Kantongin - Modern Fintech.html"). */
-export const colors = {
+export interface Palette {
+  bg: string;
+  card: string;
+  text: string;
+  muted: string;
+  line: string;
+  primary: string;
+}
+
+/** Light surface/text palette (from "Kantongin - Modern Fintech.html"). */
+export const lightColors: Palette = {
   bg: '#F4F6FA',
   card: '#FFFFFF',
   text: '#0F172A',
   muted: '#7B8794',
   line: '#EAEDF2',
   primary: '#1F6FEB',
-} as const;
+};
+
+/** Dark palette. */
+export const darkColors: Palette = {
+  bg: '#0E1117',
+  card: '#181C24',
+  text: '#F3F5F9',
+  muted: '#8B95A3',
+  line: '#272D38',
+  primary: '#3D7BFF',
+};
+
+/** @deprecated Prefer `useColors()`. Kept as the light default for static contexts. */
+export const colors: Palette = lightColors;
 
 /** Semantic transaction colors. Transfer is deliberately its own hue. */
 export const semantic = {
@@ -92,3 +114,5 @@ export function mixHex(a: string, b: string, t: number): string {
     Math.round(x * t + y * (1 - t)).toString(16).padStart(2, '0');
   return `#${ch(r1, r2)}${ch(g1, g2)}${ch(b1, b2)}`;
 }
+
+export * from './theme-context';

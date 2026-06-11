@@ -13,9 +13,26 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { KantonginProvider } from '@/store';
-import { colors } from '@/theme';
+import { ThemeProvider, useColors, useThemeMode } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+function RootNavigator() {
+  const colors = useColors();
+  const { scheme } = useThemeMode();
+  return (
+    <>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
+        <Stack.Screen name="add" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="detail" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="budget" options={{ animation: 'slide_from_right' }} />
+      </Stack>
+    </>
+  );
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -34,16 +51,11 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <KantonginProvider>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
-          <Stack.Screen name="add" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="budget" options={{ animation: 'slide_from_right' }} />
-        </Stack>
-      </KantonginProvider>
+      <ThemeProvider>
+        <KantonginProvider>
+          <RootNavigator />
+        </KantonginProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
