@@ -1,9 +1,9 @@
 /**
  * App-wide state for Kantongin (transactions, budgets, balance visibility,
- * guest mode). Mirrors the design prototype's top-level App state, exposed
- * through context so any screen/route can read and mutate it.
+ * guest mode, onboarding). Persisted to AsyncStorage so data survives reloads.
  */
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
   Budget,
@@ -11,6 +11,8 @@ import {
   budgets as seedBudgets,
   transactions as seedTxns,
 } from '@/data/kantongin';
+
+const STORAGE_KEY = 'kantongin:v1';
 
 interface KantonginState {
   txns: Transaction[];
@@ -35,6 +37,32 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
   const [hidden, setHidden] = useState(false);
   const [guest, setGuest] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Load persisted state once on mount.
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (Array.isArray(d.txns)) setTxns(d.txns);
+          if (Array.isArray(d.budgets)) setBudgets(d.budgets);
+          if (typeof d.onboarded === 'boolean') setOnboarded(d.onboarded);
+          if (typeof d.guest === 'boolean') setGuest(d.guest);
+        }
+      } catch {
+        // ignore corrupt/missing storage — fall back to seed data
+      }
+      setHydrated(true);
+    })();
+  }, []);
+
+  // Persist whenever durable state changes (after the initial load).
+  useEffect(() => {
+    if (!hydrated) return;
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ txns, budgets, onboarded, guest })).catch(() => {});
+  }, [hydrated, txns, budgets, onboarded, guest]);
 
   const value = useMemo<KantonginState>(
     () => ({
@@ -53,6 +81,9 @@ export function KantonginProvider({ children }: { children: React.ReactNode }) {
     }),
     [txns, budgets, hidden, guest, onboarded],
   );
+
+  // Avoid a flash of the wrong screen (e.g. onboarding) before storage loads.
+  if (!hydrated) return null;
 
   return <KantonginContext.Provider value={value}>{children}</KantonginContext.Provider>;
 }
