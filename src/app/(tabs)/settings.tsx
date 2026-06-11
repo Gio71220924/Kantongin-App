@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
 import { accounts } from '@/data/kantongin';
 import { useKantongin } from '@/store';
-import { colors, fonts, oklchToHex, semantic, withAlpha } from '@/theme';
+import { Palette, ThemeMode, fonts, oklchToHex, semantic, useColors, useThemeMode, withAlpha } from '@/theme';
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Pressable
       onPress={onToggle}
@@ -34,6 +36,8 @@ function Row({
   onPress?: () => void;
   last?: boolean;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Pressable onPress={onPress} style={[styles.row, last ? null : styles.rowBorder]}>
       <View style={[styles.rowIcon, { backgroundColor: withAlpha(color, 0.094) }]}>
@@ -47,6 +51,8 @@ function Row({
 }
 
 function Group({ header, children }: { header: string; children: React.ReactNode }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={{ marginBottom: 22 }}>
       <Text style={styles.groupHeader}>{header}</Text>
@@ -55,9 +61,18 @@ function Group({ header, children }: { header: string; children: React.ReactNode
   );
 }
 
+const APPEARANCE_OPTS: { label: string; value: ThemeMode }[] = [
+  { label: 'Sistem', value: 'system' },
+  { label: 'Terang', value: 'light' },
+  { label: 'Gelap', value: 'dark' },
+];
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { guest, setGuest } = useKantongin();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { mode, setMode } = useThemeMode();
   const [notif, setNotif] = useState(true);
   const [sync, setSync] = useState(true);
   const [toast, setToast] = useState('');
@@ -105,6 +120,22 @@ export default function SettingsScreen() {
           </View>
         ) : null}
 
+        <Group header="Tampilan">
+          <View style={styles.appearRow}>
+            {APPEARANCE_OPTS.map(({ label, value }) => {
+              const on = mode === value;
+              return (
+                <Pressable
+                  key={value}
+                  onPress={() => setMode(value)}
+                  style={[styles.appearBtn, on ? { backgroundColor: colors.primary } : null]}>
+                  <Text style={[styles.appearBtnText, { color: on ? '#fff' : colors.muted }]}>{label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Group>
+
         <Group header="Preferensi">
           <Row icon="coins" color={semantic.income} title="Mata Uang" detail="IDR · Rupiah" onPress={() => flash('Mata uang: Rupiah')} />
           <Row icon="bell" color="#E8893B" title="Pengingat Notifikasi" control={<Toggle on={notif} onToggle={() => setNotif((v) => !v)} />} last />
@@ -140,7 +171,8 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   h1: { fontSize: 28, fontFamily: fonts.extrabold, color: colors.text, letterSpacing: -0.6 },
   profile: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 18, padding: 16 },
   avatar: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
@@ -163,6 +195,9 @@ const styles = StyleSheet.create({
   rowDetail: { fontSize: 14, color: colors.muted, fontFamily: fonts.regular },
   toggle: { width: 46, height: 28, borderRadius: 999, justifyContent: 'center' },
   knob: { position: 'absolute', top: 3, width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 2 },
+  appearRow: { flexDirection: 'row', padding: 8, gap: 6 },
+  appearBtn: { flex: 1, paddingVertical: 8, borderRadius: 12, alignItems: 'center' },
+  appearBtnText: { fontSize: 13.5, fontFamily: fonts.semibold },
   version: { textAlign: 'center', fontSize: 12, color: colors.muted, marginTop: 6, fontFamily: fonts.regular },
   toastWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   toast: { backgroundColor: colors.text, color: colors.card, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, fontSize: 13.5, fontFamily: fonts.semibold, overflow: 'hidden' },

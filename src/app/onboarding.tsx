@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,28 +7,30 @@ import { Icon, IconName } from '@/components/Icon';
 import { AccountId, accounts, rp } from '@/data/kantongin';
 import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
-import { colors, fonts, oklchToHex, semantic, withAlpha } from '@/theme';
+import { Palette, fonts, oklchToHex, semantic, useColors, withAlpha } from '@/theme';
 
-const SLIDES: { icon: IconName; title: string; body: string; hue: string }[] = [
-  {
-    icon: 'wallet',
-    title: 'Semua kantong\ndalam satu tempat',
-    body: 'Gabungkan saldo BCA, Jago, SeaBank, dan rekening lain — lihat total uangmu sekaligus.',
-    hue: colors.primary,
-  },
-  {
-    icon: 'analytics',
-    title: 'Tahu ke mana\nuangmu pergi',
-    body: 'Catat pemasukan dan pengeluaran, atur anggaran per kategori, pantau tren tiap bulan.',
-    hue: semantic.income,
-  },
-  {
-    icon: 'swap',
-    title: 'Transfer ≠\nPengeluaran',
-    body: 'Pindah dana antar rekeningmu sendiri tidak akan dihitung sebagai pengeluaran. Posisi keuanganmu jadi jelas.',
-    hue: semantic.transfer,
-  },
-];
+function buildSlides(primary: string): { icon: IconName; title: string; body: string; hue: string }[] {
+  return [
+    {
+      icon: 'wallet',
+      title: 'Semua kantong\ndalam satu tempat',
+      body: 'Gabungkan saldo BCA, Jago, SeaBank, dan rekening lain — lihat total uangmu sekaligus.',
+      hue: primary,
+    },
+    {
+      icon: 'analytics',
+      title: 'Tahu ke mana\nuangmu pergi',
+      body: 'Catat pemasukan dan pengeluaran, atur anggaran per kategori, pantau tren tiap bulan.',
+      hue: semantic.income,
+    },
+    {
+      icon: 'swap',
+      title: 'Transfer ≠\nPengeluaran',
+      body: 'Pindah dana antar rekeningmu sendiri tidak akan dihitung sebagai pengeluaran. Posisi keuanganmu jadi jelas.',
+      hue: semantic.transfer,
+    },
+  ];
+}
 
 const SIGNUP_FIELDS = [
   { label: 'Nama lengkap', value: 'Sapto Wibowo' },
@@ -39,11 +41,14 @@ const SIGNUP_FIELDS = [
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { setGuest, setOnboarded } = useKantongin();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<Record<AccountId, boolean>>({ bca: true, jago: true, seabank: false, bri: false });
   const [guest, setGuestLocal] = useState(false);
   const [success, setSuccess] = useState(false);
+  const slides = useMemo(() => buildSlides(colors.primary), [colors.primary]);
   const popScale = useRef(new Animated.Value(0.4)).current;
 
   const top = insets.top + 28;
@@ -65,7 +70,7 @@ export default function OnboardingScreen() {
 
   // ── Intro carousel ──
   if (step <= 2) {
-    const s = SLIDES[step];
+    const s = slides[step];
     return (
       <View style={[styles.fill, { paddingTop: top, paddingBottom: bottom, paddingHorizontal: 26 }]}>
         <View style={styles.introTop}>
@@ -84,7 +89,7 @@ export default function OnboardingScreen() {
         </View>
 
         <View style={styles.dots}>
-          {SLIDES.map((_, i) => (
+          {slides.map((_, i) => (
             <View key={i} style={[styles.dot, { width: i === step ? 26 : 8, backgroundColor: i === step ? colors.primary : colors.line }]} />
           ))}
         </View>
@@ -217,7 +222,8 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   fill: { flex: 1, backgroundColor: colors.bg },
   introTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   brand: { fontFamily: fonts.extrabold, fontSize: 19, color: colors.text, letterSpacing: -0.4 },
