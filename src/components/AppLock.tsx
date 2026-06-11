@@ -46,7 +46,7 @@ export function AppLock({ children }: { children: React.ReactNode }) {
         return;
       }
       setBiometricAvailable(true);
-      attempt();
+      setTimeout(attempt, 400);
     })();
   }, []);
 
