@@ -3,12 +3,13 @@
  * C1BottomNav. The four routes are real tabs; the FAB opens the Add modal.
  */
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
 import { haptics } from '@/lib/haptics';
-import { colors, fonts } from '@/theme';
+import { Palette, fonts, useColors } from '@/theme';
 
 /** Structural subset of expo-router/react-navigation's tabBar props. */
 type TabBarProps = {
@@ -25,6 +26,8 @@ const TABS: { name: string; label: string; icon: IconName }[] = [
 
 export function BottomTabBar({ state, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const renderTab = (t: (typeof TABS)[number]) => {
     const routeIndex = state.routes.findIndex((r) => r.name === t.name);
@@ -63,8 +66,9 @@ export function BottomTabBar({ state, navigation }: TabBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 8 },
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 8 },
   bar: {
     marginHorizontal: 14,
     height: 62,

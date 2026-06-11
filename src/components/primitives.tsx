@@ -3,7 +3,7 @@
  * Ported from the design's c1-ui.jsx to React Native.
  */
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Svg, { Circle, G, Text as SvgText } from 'react-native-svg';
 
@@ -15,7 +15,7 @@ import {
   cat,
   rp,
 } from '@/data/kantongin';
-import { catColor, catSoft, colors, fonts, oklchToHex, radius, semantic } from '@/theme';
+import { Palette, catColor, catSoft, fonts, oklchToHex, radius, semantic, useColors } from '@/theme';
 
 /* ── Card ────────────────────────────────────────────────── */
 export function Card({
@@ -27,6 +27,8 @@ export function Card({
   style?: StyleProp<ViewStyle>;
   pad?: number;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return <View style={[styles.card, { padding: pad }, style]}>{children}</View>;
 }
 
@@ -40,6 +42,8 @@ export function SectionHead({
   action?: string;
   onAction?: () => void;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.sectionHead}>
       <Text style={styles.sectionTitle} numberOfLines={1}>
@@ -61,6 +65,8 @@ const TYPE_META = {
   transfer: { c: semantic.transfer, t: 'Transfer', i: 'swap' as IconName },
 };
 export function TypeBadge({ type, small }: { type: keyof typeof TYPE_META; small?: boolean }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const m = TYPE_META[type];
   return (
     <View
@@ -76,6 +82,8 @@ export function TypeBadge({ type, small }: { type: keyof typeof TYPE_META; small
 
 /* ── Account mini card ───────────────────────────────────── */
 export function AccountCard({ a, onPress }: { a: Account; onPress?: () => void }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const base = oklchToHex(0.55, 0.13, a.hue);
   const dark = oklchToHex(0.4, 0.12, a.hue);
   return (
@@ -99,6 +107,8 @@ export function AccountCard({ a, onPress }: { a: Account; onPress?: () => void }
 
 /* ── Transaction row ─────────────────────────────────────── */
 export function TxnRow({ t, onPress }: { t: Transaction; onPress?: () => void }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isTransfer = t.type === 'transfer';
   const c = isTransfer ? null : cat(t.cat);
   const hue = isTransfer ? 220 : c!.hue;
@@ -166,6 +176,7 @@ export function Donut({
   centerTop?: string;
   centerBottom?: string;
 }) {
+  const colors = useColors();
   const r = (size - thickness) / 2;
   const C = 2 * Math.PI * r;
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
@@ -202,13 +213,7 @@ export function Donut({
         </SvgText>
       ) : null}
       {centerBottom ? (
-        <SvgText
-          x={half}
-          y={size * 0.6}
-          textAnchor="middle"
-          fontSize={17}
-          fontWeight="700"
-          fill={colors.text}>
+        <SvgText x={half} y={size * 0.6} textAnchor="middle" fontSize={17} fontWeight="700" fill={colors.text}>
           {centerBottom}
         </SvgText>
       ) : null}
@@ -218,6 +223,8 @@ export function Donut({
 
 /* ── Horizontal bar list ─────────────────────────────────── */
 export function BarList({ rows }: { rows: { label: string; value: number; color: string }[] }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const max = Math.max(...rows.map((r) => r.value)) || 1;
   return (
     <View style={{ gap: 13 }}>
@@ -230,9 +237,7 @@ export function BarList({ rows }: { rows: { label: string; value: number; color:
             <Text style={styles.barValue}>{rp(r.value)}</Text>
           </View>
           <View style={styles.barTrack}>
-            <View
-              style={{ height: '100%', borderRadius: 999, backgroundColor: r.color, width: `${(r.value / max) * 100}%` }}
-            />
+            <View style={{ height: '100%', borderRadius: 999, backgroundColor: r.color, width: `${(r.value / max) * 100}%` }} />
           </View>
         </View>
       ))}
@@ -248,6 +253,8 @@ export function TrendChart({
   data: { m: string; expense: number; transfer: number }[];
   height?: number;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const max = Math.max(...data.map((d) => Math.max(d.expense, d.transfer))) || 1;
   const barArea = height - 22;
   return (
@@ -265,62 +272,63 @@ export function TrendChart({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius,
-    borderWidth: 1,
-    borderColor: colors.line,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  sectionHead: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginHorizontal: 4,
-    marginBottom: 11,
-  },
-  sectionTitle: { fontSize: 16, fontFamily: fonts.bold, color: colors.text, letterSpacing: -0.3, flexShrink: 1 },
-  sectionAction: { color: colors.primary, fontSize: 13.5, fontFamily: fonts.semibold },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, alignSelf: 'flex-start' },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  acctCard: { width: 158, borderRadius: 20, padding: 16, overflow: 'hidden' },
-  acctBlob: { position: 'absolute', right: -22, top: -22, width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.10)' },
-  acctName: { fontSize: 15, fontFamily: fonts.bold, color: '#fff', letterSpacing: 0.2 },
-  acctLast4: { fontSize: 10.5, color: 'rgba(255,255,255,0.85)', fontFamily: fonts.semibold },
-  acctKind: { fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
-  acctBalance: { fontSize: 19, fontFamily: fonts.bold, color: '#fff', marginTop: 18, letterSpacing: -0.3 },
-  txnRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
-  txnChip: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  txnSwapBadge: {
-    position: 'absolute',
-    right: -3,
-    bottom: -3,
-    width: 17,
-    height: 17,
-    borderRadius: 8.5,
-    backgroundColor: semantic.transfer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.card,
-  },
-  txnTitle: { fontSize: 15, fontFamily: fonts.semibold, color: colors.text },
-  txnSubRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 },
-  txnTransferTag: { color: semantic.transfer, fontFamily: fonts.semibold, fontSize: 12.5 },
-  txnSub: { fontSize: 12.5, color: colors.muted, flexShrink: 1 },
-  txnAmount: { fontSize: 15, fontFamily: fonts.bold, letterSpacing: -0.2 },
-  txnTime: { fontSize: 11.5, color: colors.muted },
-  barLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 },
-  barLabel: { fontSize: 13.5, fontFamily: fonts.semibold, color: colors.text, flexShrink: 1 },
-  barValue: { fontSize: 13, fontFamily: fonts.bold, color: colors.text, marginLeft: 10 },
-  barTrack: { height: 9, borderRadius: 999, backgroundColor: colors.line, overflow: 'hidden' },
-  trendRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  trendCol: { flex: 1, alignItems: 'center', gap: 6 },
-  trendBars: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 },
-  trendLabel: { fontSize: 11, color: colors.muted, fontFamily: fonts.semibold },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: radius,
+      borderWidth: 1,
+      borderColor: colors.line,
+      shadowColor: '#0F172A',
+      shadowOpacity: 0.05,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 2,
+    },
+    sectionHead: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginHorizontal: 4,
+      marginBottom: 11,
+    },
+    sectionTitle: { fontSize: 16, fontFamily: fonts.bold, color: colors.text, letterSpacing: -0.3, flexShrink: 1 },
+    sectionAction: { color: colors.primary, fontSize: 13.5, fontFamily: fonts.semibold },
+    badge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, alignSelf: 'flex-start' },
+    rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    acctCard: { width: 158, borderRadius: 20, padding: 16, overflow: 'hidden' },
+    acctBlob: { position: 'absolute', right: -22, top: -22, width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.10)' },
+    acctName: { fontSize: 15, fontFamily: fonts.bold, color: '#fff', letterSpacing: 0.2 },
+    acctLast4: { fontSize: 10.5, color: 'rgba(255,255,255,0.85)', fontFamily: fonts.semibold },
+    acctKind: { fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+    acctBalance: { fontSize: 19, fontFamily: fonts.bold, color: '#fff', marginTop: 18, letterSpacing: -0.3 },
+    txnRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
+    txnChip: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+    txnSwapBadge: {
+      position: 'absolute',
+      right: -3,
+      bottom: -3,
+      width: 17,
+      height: 17,
+      borderRadius: 8.5,
+      backgroundColor: semantic.transfer,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: colors.card,
+    },
+    txnTitle: { fontSize: 15, fontFamily: fonts.semibold, color: colors.text },
+    txnSubRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 },
+    txnTransferTag: { color: semantic.transfer, fontFamily: fonts.semibold, fontSize: 12.5 },
+    txnSub: { fontSize: 12.5, color: colors.muted, flexShrink: 1 },
+    txnAmount: { fontSize: 15, fontFamily: fonts.bold, letterSpacing: -0.2 },
+    txnTime: { fontSize: 11.5, color: colors.muted },
+    barLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 },
+    barLabel: { fontSize: 13.5, fontFamily: fonts.semibold, color: colors.text, flexShrink: 1 },
+    barValue: { fontSize: 13, fontFamily: fonts.bold, color: colors.text, marginLeft: 10 },
+    barTrack: { height: 9, borderRadius: 999, backgroundColor: colors.line, overflow: 'hidden' },
+    trendRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
+    trendCol: { flex: 1, alignItems: 'center', gap: 6 },
+    trendBars: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 },
+    trendLabel: { fontSize: 11, color: colors.muted, fontFamily: fonts.semibold },
+  });

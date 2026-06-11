@@ -5,7 +5,7 @@
 import React from 'react';
 import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 
-import { colors } from '@/theme';
+import { useColors } from '@/theme';
 
 export type IconName =
   | 'home' | 'history' | 'analytics' | 'settings' | 'plus'
@@ -22,10 +22,11 @@ interface IconProps {
   color?: string;
 }
 
-export function Icon({ name, size = 22, stroke = 2, color = colors.text }: IconProps) {
+export function Icon({ name, size = 22, stroke = 2, color }: IconProps) {
+  const themeColor = useColors().text;
   const p = {
     fill: 'none',
-    stroke: color,
+    stroke: color ?? themeColor,
     strokeWidth: stroke,
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
