@@ -6,9 +6,9 @@
 export type AccountId = 'bca' | 'jago' | 'seabank' | 'bri';
 export type CategoryId =
   | 'makan' | 'transport' | 'belanja' | 'tagihan'
-  | 'hiburan' | 'kesehatan' | 'gaji' | 'transfer';
+  | 'hiburan' | 'kesehatan' | 'gaji' | 'freelance' | 'hadiah' | 'transfer';
 export type Glyph =
-  | 'food' | 'car' | 'bag' | 'bolt' | 'play' | 'plus' | 'wallet' | 'swap';
+  | 'food' | 'car' | 'bag' | 'bolt' | 'play' | 'plus' | 'wallet' | 'coins' | 'download' | 'swap';
 export type TxnType = 'income' | 'expense' | 'transfer';
 
 export interface Account {
@@ -70,6 +70,8 @@ export const categories: Category[] = [
   { id: 'hiburan', label: 'Hiburan', hue: 330, glyph: 'play' },
   { id: 'kesehatan', label: 'Kesehatan', hue: 150, glyph: 'plus' },
   { id: 'gaji', label: 'Gaji', hue: 168, glyph: 'wallet' },
+  { id: 'freelance', label: 'Freelance', hue: 200, glyph: 'coins' },
+  { id: 'hadiah', label: 'Hadiah', hue: 45, glyph: 'download' },
   { id: 'transfer', label: 'Transfer', hue: 262, glyph: 'swap' },
 ];
 

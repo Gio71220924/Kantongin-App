@@ -140,5 +140,7 @@ export const glyphFor: Record<string, IconName> = {
   hiburan: 'play',
   kesehatan: 'plus',
   gaji: 'wallet',
+  freelance: 'coins',
+  hadiah: 'download',
   transfer: 'swap',
 };

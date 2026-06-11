@@ -20,7 +20,7 @@ import { Palette, catColor, catSoft, fonts, oklchToHex, semantic, useColors } fr
 type AddType = 'income' | 'expense' | 'transfer';
 
 const EXPENSE_CATS: CategoryId[] = ['makan', 'transport', 'belanja', 'tagihan', 'hiburan', 'kesehatan'];
-const INCOME_CATS: CategoryId[] = ['gaji', 'belanja'];
+const INCOME_CATS: CategoryId[] = ['gaji', 'freelance', 'hadiah', 'belanja'];
 
 function group(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
