@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,12 +7,14 @@ import { Icon, IconName, glyphFor } from '@/components/Icon';
 import { acct, cat as catById, dayLabel, rp } from '@/data/kantongin';
 import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
-import { catColor, catSoft, colors, fonts, oklchToHex, semantic } from '@/theme';
+import { Palette, catColor, catSoft, fonts, oklchToHex, semantic, useColors } from '@/theme';
 
 const TYPE_LABEL = { income: 'Pemasukan', expense: 'Pengeluaran', transfer: 'Transfer' } as const;
 
 export default function DetailScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { txns, deleteTxn } = useKantongin();
   const [confirm, setConfirm] = useState(false);
@@ -162,6 +164,8 @@ export default function DetailScreen() {
 }
 
 function Field({ label, value, mono, last }: { label: string; value: string; mono?: boolean; last?: boolean }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.field, last ? null : styles.fieldBorder]}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -172,7 +176,8 @@ function Field({ label, value, mono, last }: { label: string; value: string; mon
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingBottom: 6 },
   headerTitle: { fontSize: 16.5, fontFamily: fonts.bold, color: colors.text },

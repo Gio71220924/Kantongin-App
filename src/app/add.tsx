@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,7 +15,7 @@ import {
 } from '@/data/kantongin';
 import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
-import { catColor, catSoft, colors, fonts, oklchToHex, semantic } from '@/theme';
+import { Palette, catColor, catSoft, fonts, oklchToHex, semantic, useColors } from '@/theme';
 
 type AddType = 'income' | 'expense' | 'transfer';
 
@@ -28,6 +28,8 @@ function group(n: number): string {
 
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { addTxn, updateTxn, txns } = useKantongin();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const editTxn = id ? txns.find((x) => x.id === id) : undefined;
@@ -223,6 +225,8 @@ function TypeTab({
   active: AddType;
   onSelect: (t: AddType) => void;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const on = active === id;
   return (
     <Pressable onPress={() => onSelect(id)} style={[styles.typeTab, { backgroundColor: on ? semantic[id] : 'transparent' }]}>
@@ -243,6 +247,8 @@ function AcctPick({
   accent: string;
   exclude?: AccountId;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }} style={{ marginBottom: 18 }}>
       {accounts
@@ -264,10 +270,13 @@ function AcctPick({
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return <Text style={styles.fieldLabel}>{children}</Text>;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   overlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 60, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 18 },
   popCircle: { width: 92, height: 92, borderRadius: 46, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.33, shadowRadius: 34, shadowOffset: { width: 0, height: 14 }, elevation: 10 },
   successTitle: { fontSize: 18, fontFamily: fonts.extrabold, color: colors.text },

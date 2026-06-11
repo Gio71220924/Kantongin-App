@@ -1,13 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, glyphFor } from '@/components/Icon';
 import { CategoryId, byCategory, cat as catById, rp } from '@/data/kantongin';
 import { useKantongin } from '@/store';
-import { catColor, catSoft, colors, fonts, mixHex, semantic } from '@/theme';
+import { Palette, catColor, catSoft, fonts, mixHex, semantic, useColors } from '@/theme';
 
 const NEAR = '#E8893B';
 
@@ -19,6 +19,8 @@ function spentOf(id: CategoryId): number {
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
   const { budgets, setBudgets } = useKantongin();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [editing, setEditing] = useState<CategoryId | null>(null);
 
   const totalLimit = budgets.reduce((s, b) => s + b.limit, 0);
@@ -124,7 +126,8 @@ export default function BudgetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingBottom: 8 },
   iconBtn: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
   h1: { fontSize: 24, fontFamily: fonts.extrabold, color: colors.text, letterSpacing: -0.5 },
