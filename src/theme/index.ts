@@ -3,37 +3,8 @@
  * Ported from the design's `--c1-*` CSS vars + c1-ui semantic colors.
  */
 
-export interface Palette {
-  bg: string;
-  card: string;
-  text: string;
-  muted: string;
-  line: string;
-  primary: string;
-}
-
-/** Light surface/text palette (from "Kantongin - Modern Fintech.html"). */
-export const lightColors: Palette = {
-  bg: '#F4F6FA',
-  card: '#FFFFFF',
-  text: '#0F172A',
-  muted: '#7B8794',
-  line: '#EAEDF2',
-  primary: '#1F6FEB',
-};
-
-/** Dark palette. */
-export const darkColors: Palette = {
-  bg: '#0E1117',
-  card: '#181C24',
-  text: '#F3F5F9',
-  muted: '#8B95A3',
-  line: '#272D38',
-  primary: '#3D7BFF',
-};
-
-/** @deprecated Prefer `useColors()`. Kept as the light default for static contexts. */
-export const colors: Palette = lightColors;
+export type { Palette } from './colors';
+export { colors, darkColors, lightColors } from './colors';
 
 /** Semantic transaction colors. Transfer is deliberately its own hue. */
 export const semantic = {

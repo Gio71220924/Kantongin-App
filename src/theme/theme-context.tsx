@@ -2,7 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { Palette, darkColors, lightColors } from './index';
+import { Palette, darkColors, lightColors } from './colors';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 

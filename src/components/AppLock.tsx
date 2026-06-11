@@ -12,19 +12,26 @@ export function AppLock({ children }: { children: React.ReactNode }) {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [failed, setFailed] = useState(false);
   const appState = useRef<AppStateStatus>(AppState.currentState);
+  const authenticating = useRef(false);
 
   const attempt = async () => {
+    if (authenticating.current) return;
+    authenticating.current = true;
     setFailed(false);
-    const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Buka Kantongin',
-      fallbackLabel: 'Gunakan kode',
-      cancelLabel: 'Batal',
-      disableDeviceFallback: false,
-    });
-    if (result.success) {
-      setUnlocked(true);
-    } else {
-      setFailed(true);
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Buka Kantongin',
+        fallbackLabel: 'Gunakan kode',
+        cancelLabel: 'Batal',
+        disableDeviceFallback: false,
+      });
+      if (result.success) {
+        setUnlocked(true);
+      } else {
+        setFailed(true);
+      }
+    } finally {
+      authenticating.current = false;
     }
   };
 
@@ -48,13 +55,15 @@ export function AppLock({ children }: { children: React.ReactNode }) {
         appState.current === 'active' &&
         (next === 'background' || next === 'inactive')
       ) {
-        setUnlocked(false);
-        setFailed(false);
-      } else if (
-        appState.current !== 'active' &&
-        next === 'active'
-      ) {
-        attempt();
+        // Don't re-lock if the Face ID / passcode sheet is what caused the transition
+        if (!authenticating.current) {
+          setUnlocked(false);
+          setFailed(false);
+        }
+      } else if (appState.current !== 'active' && next === 'active') {
+        if (!authenticating.current) {
+          attempt();
+        }
       }
       appState.current = next;
     });
