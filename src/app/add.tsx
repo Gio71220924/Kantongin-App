@@ -19,6 +19,8 @@ import { Palette, catColor, catSoft, fonts, oklchToHex, semantic, useColors } fr
 
 type AddType = 'income' | 'expense' | 'transfer';
 
+const MONTHS_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
 const EXPENSE_CATS: CategoryId[] = ['makan', 'transport', 'belanja', 'tagihan', 'hiburan', 'kesehatan'];
 const INCOME_CATS: CategoryId[] = ['gaji', 'freelance', 'hadiah', 'belanja'];
 
@@ -49,12 +51,28 @@ export default function AddScreen() {
   const isTransfer = type === 'transfer';
   const amtNum = parseInt(amount || '0', 10);
 
-  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const MONTHS_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-  const todayDisplay = useMemo(() => {
-    const d = new Date();
-    return `Hari ini · ${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
-  }, []);
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [dateISO, setDateISO] = useState(() => (isEdit ? editTxn!.date : todayStr));
+
+  const stepDate = (days: number) => {
+    setDateISO((prev) => {
+      const d = new Date(prev + 'T00:00:00');
+      d.setDate(d.getDate() + days);
+      const next = d.toISOString().slice(0, 10);
+      return next > todayStr ? prev : next;
+    });
+  };
+
+  const dateDisplay = useMemo(() => {
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yesterdayStr = yest.toISOString().slice(0, 10);
+    const [y, m, d] = dateISO.split('-');
+    const formatted = `${parseInt(d, 10)} ${MONTHS_ID[parseInt(m, 10) - 1]} ${y}`;
+    if (dateISO === todayStr) return `Hari ini · ${formatted}`;
+    if (dateISO === yesterdayStr) return `Kemarin · ${formatted}`;
+    return formatted;
+  }, [dateISO, todayStr]);
   const valid = amtNum > 0 && (!isTransfer || fromId !== toId);
   const cats = categories.filter((c) => (type === 'income' ? INCOME_CATS : EXPENSE_CATS).includes(c.id));
 
@@ -69,8 +87,8 @@ export default function AddScreen() {
   const save = () => {
     if (!valid) return;
     const base = isEdit
-      ? { id: editTxn!.id, amount: amtNum, date: editTxn!.date, time: editTxn!.time }
-      : { id: 'n' + Date.now(), amount: amtNum, date: todayISO, time: 'Baru' };
+      ? { id: editTxn!.id, amount: amtNum, date: dateISO, time: editTxn!.time }
+      : { id: 'n' + Date.now(), amount: amtNum, date: dateISO, time: 'Baru' };
     const t: Transaction = isTransfer
       ? { ...base, type: 'transfer', title: note || 'Transfer kantong', from: fromId, to: toId }
       : {
@@ -194,8 +212,15 @@ export default function AddScreen() {
         {/* date */}
         <View style={styles.dateRow}>
           <Icon name="calendar" size={18} color={colors.muted} />
-          <Text style={styles.dateText}>{todayDisplay}</Text>
-          <Icon name="chevron" size={16} color={colors.muted} />
+          <Text style={styles.dateText}>{dateDisplay}</Text>
+          <Pressable onPress={() => stepDate(-1)} hitSlop={8} style={styles.dateBtn}>
+            <View style={{ transform: [{ scaleX: -1 }] }}>
+              <Icon name="chevron" size={17} color={colors.text} />
+            </View>
+          </Pressable>
+          <Pressable onPress={() => stepDate(1)} hitSlop={8} disabled={dateISO >= todayStr} style={styles.dateBtn}>
+            <Icon name="chevron" size={17} color={dateISO >= todayStr ? colors.line : colors.text} />
+          </Pressable>
         </View>
       </ScrollView>
 
@@ -310,8 +335,9 @@ const makeStyles = (colors: Palette) =>
   acctDot: { width: 8, height: 8, borderRadius: 4 },
   acctPickText: { fontFamily: fonts.semibold, fontSize: 13.5 },
   input: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14, fontSize: 14.5, color: colors.text, fontFamily: fonts.medium, marginBottom: 14 },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
   dateText: { fontSize: 14.5, color: colors.text, flex: 1, fontFamily: fonts.medium },
+  dateBtn: { width: 32, height: 32, borderRadius: 10, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
   keypadWrap: { backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.line, paddingHorizontal: 14, paddingTop: 12 },
   keypad: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
   key: { width: '31%', flexGrow: 1, height: 42, borderRadius: 13, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
