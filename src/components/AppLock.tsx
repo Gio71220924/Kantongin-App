@@ -13,9 +13,10 @@ export function AppLock({ children }: { children: React.ReactNode }) {
   const [failed, setFailed] = useState(false);
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const authenticating = useRef(false);
+  const unlockedRef = useRef(false); // ref copy so listeners always see current value
 
   const attempt = async () => {
-    if (authenticating.current) return;
+    if (authenticating.current || unlockedRef.current) return;
     authenticating.current = true;
     setFailed(false);
     try {
@@ -26,6 +27,7 @@ export function AppLock({ children }: { children: React.ReactNode }) {
         disableDeviceFallback: false,
       });
       if (result.success) {
+        unlockedRef.current = true;
         setUnlocked(true);
       } else {
         setFailed(true);
@@ -57,11 +59,12 @@ export function AppLock({ children }: { children: React.ReactNode }) {
       ) {
         // Don't re-lock if the Face ID / passcode sheet is what caused the transition
         if (!authenticating.current) {
+          unlockedRef.current = false;
           setUnlocked(false);
           setFailed(false);
         }
       } else if (appState.current !== 'active' && next === 'active') {
-        if (!authenticating.current) {
+        if (!authenticating.current && !unlockedRef.current) {
           attempt();
         }
       }
