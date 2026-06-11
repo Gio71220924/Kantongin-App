@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
+import { haptics } from '@/lib/haptics';
 import { colors, fonts } from '@/theme';
 
 /** Structural subset of expo-router/react-navigation's tabBar props. */
@@ -47,7 +48,12 @@ export function BottomTabBar({ state, navigation }: TabBarProps) {
       <View style={styles.bar}>
         {renderTab(TABS[0])}
         {renderTab(TABS[1])}
-        <Pressable style={styles.fab} onPress={() => router.push('/add')}>
+        <Pressable
+          style={styles.fab}
+          onPress={() => {
+            haptics.light();
+            router.push('/add');
+          }}>
           <Icon name="plus" size={26} stroke={2.6} color="#fff" />
         </Pressable>
         {renderTab(TABS[2])}

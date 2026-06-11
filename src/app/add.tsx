@@ -13,6 +13,7 @@ import {
   cat as catById,
   rp,
 } from '@/data/kantongin';
+import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
 import { catColor, catSoft, colors, fonts, oklchToHex, semantic } from '@/theme';
 
@@ -71,6 +72,7 @@ export default function AddScreen() {
           acct: acctId,
         };
     setSuccess(true);
+    haptics.success();
     Animated.spring(popScale, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }).start();
     setTimeout(() => {
       if (isEdit) updateTxn(t);

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
 import { AccountId, accounts, rp } from '@/data/kantongin';
+import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
 import { colors, fonts, oklchToHex, semantic, withAlpha } from '@/theme';
 
@@ -53,6 +54,7 @@ export default function OnboardingScreen() {
 
   const finish = () => {
     setSuccess(true);
+    haptics.success();
     Animated.spring(popScale, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }).start();
     setTimeout(() => {
       setGuest(guest);

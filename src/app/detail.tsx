@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName, glyphFor } from '@/components/Icon';
 import { acct, cat as catById, dayLabel, rp } from '@/data/kantongin';
+import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
 import { catColor, catSoft, colors, fonts, oklchToHex, semantic } from '@/theme';
 
@@ -143,6 +144,7 @@ export default function DetailScreen() {
             <Pressable
               style={styles.sheetDelete}
               onPress={() => {
+                haptics.warning();
                 deleteTxn(txn.id);
                 setConfirm(false);
                 router.back();
