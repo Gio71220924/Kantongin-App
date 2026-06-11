@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
 import { AccountCard, Card, Donut, SectionHead, TxnRow } from '@/components/primitives';
-import { accounts, byCategory, cat, rp, summary, totalBalance } from '@/data/kantongin';
+import { accounts, cat, rp, totalBalance } from '@/data/kantongin';
+import { computeByCategory, computeSummary, currentYM } from '@/lib/stats';
 import { useKantongin } from '@/store';
 import { Palette, catColor, fonts, mixHex, radius, semantic, useColors } from '@/theme';
 
@@ -29,6 +30,9 @@ export default function DashboardScreen() {
   const { txns, hidden, setHidden, guest, onboarded } = useKantongin();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const yearMonth = useMemo(() => currentYM(), []);
+  const summary = useMemo(() => computeSummary(txns, yearMonth), [txns, yearMonth]);
+  const byCategory = useMemo(() => computeByCategory(txns, yearMonth), [txns, yearMonth]);
 
   if (!onboarded) return <Redirect href={'/onboarding' as Href} />;
 
