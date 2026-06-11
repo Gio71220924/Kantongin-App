@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
-import { accounts, rp } from '@/data/kantongin';
+import { rp } from '@/data/kantongin';
 import { haptics } from '@/lib/haptics';
 import { useKantongin } from '@/store';
 import { Palette, fonts, oklchToHex, semantic, useColors, withAlpha } from '@/theme';
@@ -40,12 +40,14 @@ const SIGNUP_FIELDS = [
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const { setGuest, setOnboarded } = useKantongin();
+  const { setGuest, setOnboarded, initUserData } = useKantongin();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [step, setStep] = useState(0);
-  const [picked, setPicked] = useState<Record<string, boolean>>({ bca: true, jago: true, seabank: false, bri: false });
+  const [userAccts, setUserAccts] = useState<{ id: string; name: string; balanceStr: string; hue: number }[]>([]);
+  const [addingName, setAddingName] = useState('');
+  const [addingBalance, setAddingBalance] = useState('');
   const [guest, setGuestLocal] = useState(false);
   const [success, setSuccess] = useState(false);
   const slides = useMemo(() => buildSlides(colors.primary), [colors.primary]);
@@ -54,10 +56,30 @@ export default function OnboardingScreen() {
   const top = insets.top + 28;
   const bottom = insets.bottom + 20;
 
-  const pickedList = accounts.filter((a) => picked[a.id]);
-  const total = pickedList.reduce((s, a) => s + a.balance, 0);
+  const HUES = [218, 28, 168, 256, 330, 45, 150, 290];
+  const total = userAccts.reduce((s, a) => s + (parseInt(a.balanceStr.replace(/\./g, ''), 10) || 0), 0);
+
+  const confirmAddAcct = () => {
+    const name = addingName.trim();
+    if (!name) return;
+    const id = 'u' + Date.now();
+    const hue = HUES[userAccts.length % HUES.length];
+    setUserAccts((prev) => [...prev, { id, name, balanceStr: addingBalance, hue }]);
+    setAddingName('');
+    setAddingBalance('');
+  };
 
   const finish = () => {
+    const accts = userAccts.map((u) => ({
+      id: u.id,
+      name: u.name,
+      kind: 'Kantong',
+      last4: '',
+      balance: parseInt(u.balanceStr.replace(/\./g, ''), 10) || 0,
+      hue: u.hue,
+    }));
+    const bals = Object.fromEntries(accts.map((a) => [a.id, a.balance])) as Record<string, number>;
+    initUserData(accts, bals);
     setSuccess(true);
     haptics.success();
     Animated.spring(popScale, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }).start();
@@ -147,7 +169,7 @@ export default function OnboardingScreen() {
     );
   }
 
-  // ── Pick accounts ──
+  // ── Add accounts ──
   return (
     <View style={styles.fill}>
       {success ? (
@@ -156,9 +178,7 @@ export default function OnboardingScreen() {
             <Icon name="check" size={50} stroke={3} color="#fff" />
           </Animated.View>
           <Text style={styles.successTitle}>Kantongmu siap!</Text>
-          <Text style={styles.successSub}>
-            {pickedList.length} kantong · total {rp(total)}
-          </Text>
+          <Text style={styles.successSub}>{userAccts.length} kantong · total {rp(total)}</Text>
         </View>
       ) : null}
 
@@ -168,42 +188,63 @@ export default function OnboardingScreen() {
             <Icon name="chevron" size={19} color={colors.text} />
           </View>
         </Pressable>
-        <Text style={[styles.h1, { marginTop: 24 }]}>Pilih kantongmu</Text>
-        <Text style={styles.lede}>Tambahkan rekening yang kamu pakai. Saldo bisa diubah nanti.</Text>
+        <Text style={[styles.h1, { marginTop: 24 }]}>Tambah kantongmu</Text>
+        <Text style={styles.lede}>Masukkan rekening atau dompet digital yang kamu punya beserta saldonya.</Text>
         {guest ? (
           <View style={styles.guestBadge}>
             <Icon name="user" size={16} stroke={2.2} color={colors.primary} />
             <Text style={styles.guestBadgeText}>
-              <Text style={{ color: colors.primary, fontFamily: fonts.bold }}>Mode Tamu</Text> · data disimpan di perangkat ini. Bisa
-              dibuatkan akun nanti.
+              <Text style={{ color: colors.primary, fontFamily: fonts.bold }}>Mode Tamu</Text> · data disimpan di perangkat ini.
             </Text>
           </View>
         ) : null}
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 26, paddingTop: 18, paddingBottom: 10, gap: 11 }} showsVerticalScrollIndicator={false}>
-        {accounts.map((a) => {
-          const on = picked[a.id];
-          return (
-            <Pressable
-              key={a.id}
-              onPress={() => setPicked((p) => ({ ...p, [a.id]: !p[a.id] }))}
-              style={[styles.acctRow, { borderColor: on ? colors.primary : colors.line }]}>
-              <View style={[styles.acctAvatar, { backgroundColor: oklchToHex(0.55, 0.13, a.hue) }]}>
-                <Text style={styles.acctAvatarText}>{a.name.slice(0, 2)}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.acctName}>{a.name}</Text>
-                <Text style={styles.acctMeta}>
-                  {a.kind} · {rp(a.balance)}
-                </Text>
-              </View>
-              <View style={[styles.check, on ? { backgroundColor: colors.primary } : { borderWidth: 2, borderColor: colors.line }]}>
-                {on ? <Icon name="check" size={16} stroke={3} color="#fff" /> : null}
-              </View>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 26, paddingTop: 18, paddingBottom: 10, gap: 10 }} showsVerticalScrollIndicator={false}>
+        {userAccts.map((a) => (
+          <View key={a.id} style={[styles.acctRow, { borderColor: colors.primary }]}>
+            <View style={[styles.acctAvatar, { backgroundColor: oklchToHex(0.55, 0.13, a.hue) }]}>
+              <Text style={styles.acctAvatarText}>{a.name.slice(0, 2).toUpperCase()}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.acctName}>{a.name}</Text>
+              <Text style={styles.acctMeta}>{a.balanceStr ? rp(parseInt(a.balanceStr.replace(/\./g, ''), 10) || 0) : 'Rp0'}</Text>
+            </View>
+            <Pressable onPress={() => setUserAccts((prev) => prev.filter((x) => x.id !== a.id))} hitSlop={8}>
+              <Icon name="close" size={18} stroke={2.4} color={colors.muted} />
             </Pressable>
-          );
-        })}
+          </View>
+        ))}
+
+        {/* inline add row */}
+        <View style={[styles.acctRow, { borderColor: colors.line, borderStyle: 'dashed', gap: 10 }]}>
+          <View style={[styles.acctAvatar, { backgroundColor: colors.line }]}>
+            <Icon name="plus" size={22} stroke={2.2} color={colors.muted} />
+          </View>
+          <View style={{ flex: 1, gap: 6 }}>
+            <TextInput
+              value={addingName}
+              onChangeText={setAddingName}
+              placeholder="Nama kantong (BCA, OVO, Dompet…)"
+              placeholderTextColor={colors.muted}
+              style={styles.addInput}
+            />
+            <TextInput
+              value={addingBalance}
+              onChangeText={(v) => setAddingBalance(v.replace(/[^0-9]/g, ''))}
+              placeholder="Saldo awal (Rp)"
+              placeholderTextColor={colors.muted}
+              keyboardType="numeric"
+              style={styles.addInput}
+            />
+          </View>
+          <Pressable
+            onPress={confirmAddAcct}
+            disabled={!addingName.trim()}
+            style={[styles.addConfirmBtn, { backgroundColor: addingName.trim() ? colors.primary : colors.line }]}>
+            <Icon name="check" size={16} stroke={2.8} color={addingName.trim() ? '#fff' : colors.muted} />
+          </Pressable>
+        </View>
       </ScrollView>
 
       <View style={{ paddingHorizontal: 26, paddingTop: 8, paddingBottom: bottom }}>
@@ -213,9 +254,9 @@ export default function OnboardingScreen() {
         </View>
         <Pressable
           onPress={finish}
-          disabled={pickedList.length === 0}
-          style={[styles.primaryBtn, pickedList.length === 0 ? { backgroundColor: colors.line } : null]}>
-          <Text style={[styles.primaryBtnText, pickedList.length === 0 ? { color: colors.muted } : null]}>Masuk ke Kantongin</Text>
+          disabled={userAccts.length === 0}
+          style={[styles.primaryBtn, userAccts.length === 0 ? { backgroundColor: colors.line } : null]}>
+          <Text style={[styles.primaryBtnText, userAccts.length === 0 ? { color: colors.muted } : null]}>Masuk ke Kantongin</Text>
         </Pressable>
       </View>
     </View>
@@ -264,4 +305,6 @@ const makeStyles = (colors: Palette) =>
   popCircle: { width: 96, height: 96, borderRadius: 48, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', shadowColor: colors.primary, shadowOpacity: 0.4, shadowRadius: 34, shadowOffset: { width: 0, height: 14 }, elevation: 10 },
   successTitle: { fontSize: 20, fontFamily: fonts.extrabold, color: colors.text },
   successSub: { fontSize: 14.5, color: colors.muted, fontFamily: fonts.medium },
+  addInput: { fontSize: 14.5, color: colors.text, fontFamily: fonts.medium, borderBottomWidth: 1, borderBottomColor: colors.line, paddingVertical: 4 },
+  addConfirmBtn: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });
