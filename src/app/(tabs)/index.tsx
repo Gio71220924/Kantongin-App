@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
 import { AccountCard, Card, Donut, SectionHead, TxnRow } from '@/components/primitives';
-import { accounts, cat, rp, totalBalance } from '@/data/kantongin';
+import { accounts, cat, rp } from '@/data/kantongin';
 import { computeByCategory, computeSummary, currentYM } from '@/lib/stats';
 import { useKantongin } from '@/store';
 import { Palette, catColor, fonts, mixHex, radius, semantic, useColors } from '@/theme';
@@ -27,7 +27,7 @@ function Tile({ label, value, color, icon }: { label: string; value: number; col
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
-  const { txns, hidden, setHidden, guest, onboarded } = useKantongin();
+  const { txns, hidden, setHidden, guest, onboarded, accountBalances, totalBalance } = useKantongin();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const yearMonth = useMemo(() => currentYM(), []);
@@ -94,7 +94,7 @@ export default function DashboardScreen() {
         contentContainerStyle={{ gap: 12, paddingBottom: 6 }}
         style={{ marginBottom: 22 }}>
         {accounts.map((a) => (
-          <AccountCard key={a.id} a={a} onPress={() => router.navigate('/analytics')} />
+          <AccountCard key={a.id} a={{ ...a, balance: accountBalances[a.id] ?? a.balance }} onPress={() => router.navigate('/analytics')} />
         ))}
       </ScrollView>
 
