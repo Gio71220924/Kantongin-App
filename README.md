@@ -1,5 +1,7 @@
 # Kantongin
 
+<img src="assets/images/icon.png" width="96" alt="Kantongin logo" />
+
 > Semua kantong uangmu, satu aplikasi.
 
 Kantongin adalah aplikasi pelacak keuangan personal untuk pengguna Indonesia. Dirancang untuk orang yang menyimpan uang di banyak tempat — rekening bank, e-wallet, dompet tunai — dan ingin melihat posisi keuangan mereka secara menyeluruh tanpa kerumitan.
