@@ -1,56 +1,145 @@
-# Welcome to your Expo app 👋
+# Kantongin
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> Semua kantong uangmu, satu aplikasi.
 
-## Get started
+Kantongin adalah aplikasi pelacak keuangan personal untuk pengguna Indonesia. Dirancang untuk orang yang menyimpan uang di banyak tempat — rekening bank, e-wallet, dompet tunai — dan ingin melihat posisi keuangan mereka secara menyeluruh tanpa kerumitan.
 
-1. Install dependencies
+**Prinsip utama:** transfer antar kantong sendiri bukan pengeluaran. Kantongin membedakan ini secara konsisten di setiap layar.
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## Fitur
 
-   ```bash
-   npx expo start
-   ```
+### Dasbor
 
-In the output, you'll find options to open the app in a
+Layar utama yang menampilkan gambaran keuangan hari ini secara sekilas:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Total saldo** dari seluruh kantong, dengan tombol sembunyikan angka
+- **Ringkasan bulan ini** — pemasukan, pengeluaran, dan transfer dalam tiga tile terpisah
+- **Grafik donut** pengeluaran per kategori bulan berjalan
+- **Kartu kantong** horizontal scrollable dengan saldo masing-masing rekening
+- **5 transaksi terbaru** langsung di bawah tanpa harus buka tab lain
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Tambah Transaksi
 
-## Get a fresh project
+Form pencatatan dengan tiga jenis transaksi:
 
-When you're ready, run:
+- **Pemasukan** — pilih kantong tujuan dan kategori (Gaji, Freelance, Hadiah, dll.)
+- **Pengeluaran** — pilih kantong sumber dan kategori (Makan, Transport, Belanja, dll.)
+- **Transfer** — pilih kantong asal dan tujuan; otomatis tidak dihitung sebagai pengeluaran
+- Pilihan tanggal dengan navigasi hari (bukan hanya "hari ini")
+- Kolom catatan opsional
+- Tambah kantong baru langsung dari form tanpa keluar halaman
+
+### Riwayat
+
+Seluruh catatan transaksi dalam satu daftar:
+
+- Transfer ditampilkan dengan warna dan ikon tersendiri (ungu, ikon ⇄) — tidak tercampur dengan pengeluaran
+- Tap transaksi untuk melihat detail lengkap
+
+### Detail Transaksi
+
+Halaman penuh per transaksi:
+
+- Tampilkan semua informasi: nominal, jenis, kantong, kategori, tanggal, catatan
+- **Edit** — ubah nominal, kategori, tanggal, catatan
+- **Hapus** transaksi dengan konfirmasi
+
+### Analitik
+
+Laporan visual keuangan per bulan:
+
+- Pilih bulan dari chip horizontal di bagian atas
+- **Pengeluaran per kategori** dengan donut chart dan daftar bar
+- **Pengeluaran per kantong** — lihat rekening mana yang paling banyak dipakai
+- **Tren bulanan** — grafik garis pengeluaran vs transfer beberapa bulan terakhir
+- **Kotak transfer** tersendiri yang menjelaskan total dana yang dipindahkan — tidak masuk total pengeluaran
+
+### Anggaran
+
+Kelola batas pengeluaran per kategori:
+
+- Set anggaran bulanan per kategori
+- Lihat persentase pemakaian secara visual
+
+### Pengaturan
+
+- **Tampilan** — pilih tema Terang, Gelap, atau ikuti sistem
+- **Daftar kantong** — lihat semua rekening yang aktif
+- **Ekspor data** — CSV / PDF
+- **Mode tamu** — gunakan app tanpa akun, data tetap tersimpan di perangkat
+
+### Onboarding
+
+Alur pertama kali buka app:
+
+- Tiga slide perkenalan fitur utama
+- Daftar akun atau lanjut sebagai tamu
+- **Buat kantong sendiri** — ketik nama rekening dan masukkan saldo awal; tidak ada daftar pilihan yang dipaksakan
+- Total saldo awal langsung terhitung saat menambah kantong
+
+### Keamanan
+
+- **Face ID / biometrik** — app terkunci otomatis saat masuk background, buka kunci saat kembali aktif
+- **Encrypted storage** — semua data disimpan di iOS Keychain via SecureStore, bukan penyimpanan biasa
+- Data tetap ada meski app ditutup; hilang hanya jika Expo Go di-uninstall
+
+---
+
+## Cara Menjalankan
+
+### Prasyarat
+
+- [Node.js](https://nodejs.org) v18 atau lebih baru
+- [Expo Go](https://expo.dev/go) terinstal di iPhone atau Android
+
+### Langkah
 
 ```bash
-npm run reset-project
+# 1. Clone repo
+git clone https://github.com/Gio71220924/Kantongin-App.git
+cd Kantongin-App
+
+# 2. Install dependensi
+npm install
+
+# 3. Jalankan dev server
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Setelah server jalan, **scan QR code** yang muncul di terminal menggunakan:
 
-### Other setup steps
+- **iPhone** — kamera bawaan atau app Expo Go
+- **Android** — app Expo Go langsung
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+App akan terbuka di perangkat. Setiap perubahan kode langsung ter-refresh otomatis.
 
-## Learn more
+### Preview di browser (opsional)
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm run web
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Buka `http://localhost:8081` untuk cek tampilan cepat tanpa perangkat fisik.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## Tech Stack
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| Layer | Teknologi |
+| --- | --- |
+| Framework | Expo SDK 56, React Native 0.85 |
+| Routing | expo-router (file-based) |
+| Bahasa | TypeScript |
+| Font | Plus Jakarta Sans (400–800) |
+| Grafik & ikon | react-native-svg |
+| Keamanan | expo-local-authentication, expo-secure-store |
+| Gradien | expo-linear-gradient |
+| Desain | Modern Fintech Design Guidelines v1.0 |
+
+---
+
+## Lisensi
+
+Proyek ini dibuat untuk keperluan pribadi dan akademis.
