@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100">
+  <defs><linearGradient id="kg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100"><stop offset="0" stop-color="#3B86F7"></stop><stop offset="1" stop-color="#1657C8"></stop></linearGradient></defs>
+  <rect width="100" height="100" rx="23" fill="url(#kg)"></rect>
+  <path d="M37 36 Q43 26 50 34 Q57 26 63 36 Z" fill="#fff"></path>
+  <path d="M35 37 C18 45 17 70 30 80 C39 87 61 87 70 80 C83 70 82 45 65 37 Z" fill="#fff"></path>
+  <rect x="32" y="36" width="36" height="7.5" rx="3.75" fill="#1F6FEB"></rect>
+  <text x="50" y="71" text-anchor="middle" font-family="sans-serif" font-size="27" font-weight="800" fill="#1F6FEB">Rp</text>
+</svg>
