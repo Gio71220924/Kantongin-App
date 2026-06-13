@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/Icon';
 import { rp } from '@/data/kantongin';
 import { haptics } from '@/lib/haptics';
+import { signInWithGoogle } from '@/lib/supabase';
 import { useKantongin } from '@/store';
 import { Palette, fonts, oklchToHex, semantic, useColors, withAlpha } from '@/theme';
 
@@ -32,15 +33,10 @@ function buildSlides(primary: string): { icon: IconName; title: string; body: st
   ];
 }
 
-const SIGNUP_FIELDS = [
-  { label: 'Nama lengkap', value: 'Sapto Wibowo' },
-  { label: 'Email', value: 'sapto.w@email.com' },
-  { label: 'Kata sandi', value: '••••••••' },
-];
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const { setGuest, setOnboarded, initUserData } = useKantongin();
+  const { setGuest, setOnboarded, initUserData, user } = useKantongin();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -50,6 +46,8 @@ export default function OnboardingScreen() {
   const [addingBalance, setAddingBalance] = useState('');
   const [guest, setGuestLocal] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState('');
   const slides = useMemo(() => buildSlides(colors.primary), [colors.primary]);
   const popScale = useRef(new Animated.Value(0.4)).current;
 
@@ -124,6 +122,23 @@ export default function OnboardingScreen() {
 
   // ── Sign up ──
   if (step === 3) {
+    const handleGoogle = async () => {
+      setGoogleError('');
+      setGoogleLoading(true);
+      try {
+        const result = await signInWithGoogle();
+        if (result === 'success') {
+          setGuestLocal(false);
+          setStep(4);
+        } else if (result === 'error') {
+          setGoogleError('Login gagal. Coba lagi.');
+        }
+        // 'cancelled' — do nothing
+      } finally {
+        setGoogleLoading(false);
+      }
+    };
+
     return (
       <View style={[styles.fill, { paddingTop: top, paddingBottom: bottom, paddingHorizontal: 26 }]}>
         <Pressable onPress={() => setStep(2)} style={styles.backBtn} hitSlop={8}>
@@ -133,34 +148,29 @@ export default function OnboardingScreen() {
         </Pressable>
 
         <View style={{ marginTop: 28 }}>
-          <Text style={styles.h1}>Buat akun</Text>
-          <Text style={styles.lede}>Datamu aman dan terenkripsi. Hanya butuh sebentar.</Text>
-        </View>
-
-        <View style={{ marginTop: 28, gap: 12 }}>
-          {SIGNUP_FIELDS.map((f) => (
-            <View key={f.label}>
-              <Text style={styles.fieldLabel}>{f.label}</Text>
-              <View style={styles.field}>
-                <Text style={styles.fieldValue}>{f.value}</Text>
-              </View>
-            </View>
-          ))}
+          <Text style={styles.h1}>Masuk ke Kantongin</Text>
+          <Text style={styles.lede}>Datamu tersimpan aman dan bisa diakses dari mana saja.</Text>
         </View>
 
         <View style={{ flex: 1 }} />
 
-        <Pressable style={styles.primaryBtn} onPress={() => { setGuestLocal(false); setStep(4); }}>
-          <Text style={styles.primaryBtnText}>Daftar</Text>
+        <Pressable
+          style={[styles.outlineBtn, googleLoading ? { opacity: 0.6 } : null]}
+          onPress={handleGoogle}
+          disabled={googleLoading}>
+          {googleLoading
+            ? <ActivityIndicator size="small" color={colors.primary} />
+            : <Text style={styles.outlineBtnText}>Lanjut dengan Google</Text>}
         </Pressable>
+
+        {googleError ? <Text style={styles.errorText}>{googleError}</Text> : null}
+
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>atau</Text>
           <View style={styles.dividerLine} />
         </View>
-        <Pressable style={styles.outlineBtn} onPress={() => { setGuestLocal(false); setStep(4); }}>
-          <Text style={styles.outlineBtnText}>Lanjut dengan Google</Text>
-        </Pressable>
+
         <Pressable style={styles.guestLink} onPress={() => { setGuestLocal(true); setStep(4); }}>
           <Icon name="user" size={17} stroke={2.2} color={colors.primary} />
           <Text style={styles.guestLinkText}>Lanjut sebagai tamu</Text>
@@ -307,4 +317,5 @@ const makeStyles = (colors: Palette) =>
   successSub: { fontSize: 14.5, color: colors.muted, fontFamily: fonts.medium },
   addInput: { fontSize: 14.5, color: colors.text, fontFamily: fonts.medium, borderBottomWidth: 1, borderBottomColor: colors.line, paddingVertical: 4 },
   addConfirmBtn: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  errorText: { color: '#E5484D', fontSize: 13, fontFamily: fonts.medium, textAlign: 'center', marginTop: 8 },
 });
